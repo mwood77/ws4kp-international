@@ -23,7 +23,7 @@ const init = () => {
 		[3, 'knots'],
 		[4, 'mph'],
 	]);
-	settings.temperatureUnits = new Setting('windUnits', 'Temperature Units', 'select', 1, temperatureChangeUnits, true, [
+	settings.temperatureUnits = new Setting('temperatureUnits', 'Temperature Units', 'select', 1, temperatureChangeUnits, true, [
 		[1, 'C'],
 		[2, 'F'],
 		[3, 'K'],
