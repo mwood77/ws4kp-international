@@ -20,6 +20,7 @@ const metersToFeet = (Meters) => Math.round(Meters / 0.3048);
 
 // Pressure conversions
 const pascalToInHg = (Pascal) => round2(Pascal * 0.000_295_3, 2);
+const pascalToMmHg = (Pascal) => round2(Pascal * 0.007_500_62, 2);
 
 export {
 	round2,
@@ -38,4 +39,5 @@ export {
 	metersToFeet,
 
 	pascalToInHg,
+	pascalToMmHg,
 };

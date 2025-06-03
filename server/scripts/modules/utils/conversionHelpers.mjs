@@ -12,6 +12,7 @@ import {
 	KilometersToBananas,
 
 	pascalToInHg,
+	pascalToMmHg,
 } from './units.mjs';
 
 export default class ConversionHelpers {
@@ -170,10 +171,12 @@ export default class ConversionHelpers {
 	static convertPressureUnits(openMeteoValue) {
 		// [1, 'hPa'],
 		// [2, 'inHg'],
+		// [3, 'mmHg'],
 		const pressureUnits = document.documentElement.attributes.getNamedItem('pressure-units').value;
 
 		if (pressureUnits === '1') return openMeteoValue; // hPa
-		if (pressureUnits === '2') return pascalToInHg(openMeteoValue); // inHg
+		if (pressureUnits === '2') return pascalToInHg(openMeteoValue);
+		if (pressureUnits === '3') return pascalToMmHg(openMeteoValue);
 		return openMeteoValue;
 	}
 
@@ -181,12 +184,16 @@ export default class ConversionHelpers {
 		let pressureUnitText = '';
 		// [1, 'hPa'],
 		// [2, 'inHg'],
+		// [3, 'mmHg'],
 		switch (document.documentElement.attributes.getNamedItem('pressure-units').value) {
 			case '1':
 				pressureUnitText = 'hPa';
 				break;
 			case '2':
 				pressureUnitText = 'inHg';
+				break;
+			case '3':
+				pressureUnitText = 'mmHg';
 				break;
 			default:
 				pressureUnitText = 'hPa';

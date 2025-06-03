@@ -38,6 +38,7 @@ const init = () => {
 	settings.pressureUnits = new Setting('pressureUnits', 'Pressure Units', 'select', 1, pressureChangeUnits, true, [
 		[1, 'hPa'],
 		[2, 'inHG'],
+		[3, 'mmHG'],
 	]);
 	settings.hoursFormat = new Setting('hoursFormat', 'Hours Format', 'select', 2, hoursChangeFormat, true, [
 		[1, '12-hour'],
