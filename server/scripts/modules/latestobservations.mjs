@@ -13,6 +13,7 @@ class LatestObservations extends WeatherDisplay {
 
 		// constants
 		this.MaximumRegionalStations = 7;
+		this.showOnProgress = false;
 	}
 
 	async getData(_weatherParameters) {
