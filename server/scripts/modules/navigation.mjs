@@ -2,7 +2,9 @@
 import noSleep from './utils/nosleep.mjs';
 import STATUS from './status.mjs';
 import { wrap } from './utils/calc.mjs';
-import { getPoint, getGeocoding, aggregateWeatherForecastData } from './utils/weather.mjs';
+import {
+	getPoint, getMarinePoint, getGeocoding, aggregateWeatherForecastData,
+} from './utils/weather.mjs';
 import settings from './settings.mjs';
 
 import { parseQueryString } from './share.mjs';
@@ -126,6 +128,16 @@ const getWeather = async (latLon, haveDataCallback) => {
 
 	// call for new data on each display
 	displays.forEach((display) => display.getData(weatherParameters));
+};
+
+const getMarineForecast = async (latLon, haveDataCallback) => {
+	const marinePoint = await getMarinePoint(latLon.lat, latLon.lon, 'marine');
+
+	if (typeof haveDataCallback === 'function') haveDataCallback(marinePoint);
+
+	displays.forEach((display) => {
+		if (display.name === 'Marine Forecast') display.getMarineData(marinePoint);
+	});
 };
 
 // receive a status update from a module {id, value}
@@ -379,6 +391,7 @@ const AssignLastUpdate = (date) => {
 
 const latLonReceived = (data, haveDataCallback) => {
 	getWeather(data, haveDataCallback);
+	getMarineForecast(data, haveDataCallback);
 	AssignLastUpdate(null);
 };
 

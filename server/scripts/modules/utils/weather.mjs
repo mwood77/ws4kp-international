@@ -1,12 +1,39 @@
 import { json } from './fetch.mjs';
 
 const openMeteoAdditionalForecastParameters = '&daily=temperature_2m_max,uv_index_max,temperature_2m_min&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,apparent_temperature,precipitation_probability,precipitation,rain,showers,snowfall,snow_depth,weather_code,pressure_msl,surface_pressure,cloud_cover,visibility,evapotranspiration,et0_fao_evapotranspiration,vapour_pressure_deficit,uv_index,uv_index_clear_sky,is_day,sunshine_duration,wet_bulb_temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m&models=best_match&timezone=auto';
+const openMeteoAdditionalForecastParametersMarine = '&hourly=swell_wave_height,swell_wave_direction,swell_wave_period&timezone=auto&forecast_days=1';
 
 const getPoint = async (lat, lon) => {
 	try {
 		return await json(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}${openMeteoAdditionalForecastParameters}`);
 	} catch (error) {
 		console.log(`Unable to get point ${lat}, ${lon}`);
+		console.error(error);
+		return false;
+	}
+};
+
+const getMarineDataModels = () => {
+	const models = [
+		'meteofrance_currents',
+		'meteofrance_wave',
+		'ewam',
+		'gwam',
+		'ecmwf_wam025',
+		'ncep_gfswave025',
+		'ncep_gfswave016',
+		'era5_ocean',
+	];
+
+	// Marine API is currently bugged. See: https://github.com/open-meteo/open-meteo/issues/1364
+	return `&models=${models[5]}`;
+};
+
+const getMarinePoint = async (lat, lon) => {
+	try {
+		return await json(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}${openMeteoAdditionalForecastParametersMarine}${getMarineDataModels()}`);
+	} catch (error) {
+		console.log(`Unable to get marine point ${lat}, ${lon}`);
 		console.error(error);
 		return false;
 	}
@@ -179,6 +206,7 @@ const aggregateWeatherForecastData = (getPointResponse) => {
 export {
 	// eslint-disable-next-line import/prefer-default-export
 	getPoint,
+	getMarinePoint,
 	getGeocoding,
 	aggregateWeatherForecastData,
 	getConditionText,
