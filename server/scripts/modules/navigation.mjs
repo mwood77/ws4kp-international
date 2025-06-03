@@ -132,11 +132,15 @@ const getWeather = async (latLon, haveDataCallback) => {
 
 const getMarineForecast = async (latLon, haveDataCallback) => {
 	const marinePoint = await getMarinePoint(latLon.lat, latLon.lon, 'marine');
+	const point = await getPoint(latLon.lat, latLon.lon);
 
 	if (typeof haveDataCallback === 'function') haveDataCallback(marinePoint);
 
 	displays.forEach((display) => {
-		if (display.name === 'Marine Forecast') display.getMarineData(marinePoint);
+		if (display.name === 'Marine Forecast') {
+			display.getMarineData(point, marinePoint);
+			// display.getData(weatherParameters);
+		}
 	});
 };
 

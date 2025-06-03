@@ -1,106 +1,152 @@
 // Marine Forecast Display
 
 import STATUS from './status.mjs';
-import getHourlyData from './hourly.mjs';
+import { loadImg } from './utils/image.mjs';
 import WeatherDisplay from './weatherdisplay.mjs';
 import { registerDisplay } from './navigation.mjs';
-import { DateTime } from '../vendor/auto/luxon.mjs';
-
-import ConversionHelpers from './utils/conversionHelpers.mjs';
+import { directionToNSEW } from './utils/calc.mjs';
+import { kphToKnots, metersToFeet } from './utils/units.mjs';
+import { aggregateWeatherForecastData } from './utils/weather.mjs';
 
 class MarineForecast extends WeatherDisplay {
 	constructor(navId, elemId, defaultActive) {
 		super(navId, elemId, 'Marine Forecast', defaultActive);
+		this.backgroundImage = loadImg('images/BackGround8_1.png');
 	}
 
-	async getMarineData(_weatherParameters) {
-		if (!super.getMarineData(_weatherParameters)) return;
+	// Override because the loading state isn't registering in getMarineData
+	// eslint-disable-next-line no-unused-vars
+	async getData(_weatherParameters) { this.setStatus(STATUS.loaded); }
+
+	handleWindSpeed(_weatherParameters) {
+		// aggregate wind speed data from conventional hourl weather data
+		const aggregatedForecastData = aggregateWeatherForecastData(_weatherParameters);
+
+		const currentTime = new Date();
+		const onlyToday = currentTime.toLocaleDateString('en-CA', { timeZone: aggregatedForecastData.timeZone }).split('T')[0]; // Extracts "YYYY-MM-DD"
+
+		// today wind speed
+		const todayWindSpeedValues = aggregatedForecastData[onlyToday].hours.slice(0, 11).map((hour) => hour.wind_speed_10m);
+		const averageTodayWindSpeed = {
+			min: Math.round(kphToKnots(Math.min(...todayWindSpeedValues))),
+			max: Math.round(kphToKnots(Math.max(...todayWindSpeedValues))),
+		};
+
+		// tonight wind speed
+		const tonightWindSpeedValues = aggregatedForecastData[onlyToday].hours.slice(12, 24).map((hour) => hour.wind_speed_10m);
+		const averageTonightWindSpeed = {
+			min: Math.round(kphToKnots(Math.min(...tonightWindSpeedValues))),
+			max: Math.round(kphToKnots(Math.max(...tonightWindSpeedValues))),
+		};
+
+		this.setStatus(STATUS.loaded);
+
+		return {
+			windSpeed: {
+				today: averageTodayWindSpeed,
+				tonight: averageTonightWindSpeed,
+			},
+		};
+	}
+
+	async getMarineData(_weatherParameters, _marineData) {
+		if (!super.getMarineData(_marineData)) return;
 		this.setStatus(STATUS.loading);
 
-		this.marineData = parseMarineData(_weatherParameters);
+		this.marineData = parseMarineData(_marineData);
+		this.data = this.handleWindSpeed(_weatherParameters);
 
+		this.calcNavTiming();
 		this.setStatus(STATUS.loaded);
 	}
 
-	drawCanvas() {
-		if (!this.image) this.image = this.elem.querySelector('.chart img');
-
-		// get available space
-		const availableWidth = 532;
-		const availableHeight = 285;
-
-		// this.image.width = availableWidth;
-		// this.image.height = availableHeight;
-
-		// // get context
-		const canvas = document.createElement('canvas');
-		canvas.width = availableWidth;
-		canvas.height = availableHeight;
-		const ctx = canvas.getContext('2d');
-		ctx.imageSmoothingEnabled = false;
-
-		// // calculate time scale
-		// const timeScale = calcScale(0, 5, this.data.temperature.length - 1, availableWidth);
-		// const startTime = DateTime.now().startOf('hour');
-		// if (ConversionHelpers.getHoursFormat() === '12-hour') {
-		// 	document.querySelector('.x-axis .l-1').innerHTML = formatTime(startTime);
-		// 	document.querySelector('.x-axis .l-2').innerHTML = formatTime(startTime.plus({ hour: 6 }));
-		// 	document.querySelector('.x-axis .l-3').innerHTML = formatTime(startTime.plus({ hour: 12 }));
-		// 	document.querySelector('.x-axis .l-4').innerHTML = formatTime(startTime.plus({ hour: 18 }));
-		// 	document.querySelector('.x-axis .l-5').innerHTML = formatTime(startTime.plus({ hour: 24 }));
-		// } else {
-		// 	document.querySelector('.x-axis .l-1').innerHTML = startTime.toFormat('HH');
-		// 	document.querySelector('.x-axis .l-2').innerHTML = startTime.plus({ hour: 6 }).toFormat('HH');
-		// 	document.querySelector('.x-axis .l-3').innerHTML = startTime.plus({ hour: 12 }).toFormat('HH');
-		// 	document.querySelector('.x-axis .l-4').innerHTML = startTime.plus({ hour: 18 }).toFormat('HH');
-		// 	document.querySelector('.x-axis .l-5').innerHTML = startTime.plus({ hour: 24 }).toFormat('HH');
-		// }
-
-		// // order is important last line drawn is on top
-		// // clouds
-		// const percentScale = calcScale(0, availableHeight - 10, 100, 10);
-		// const cloud = createPath(this.data.skyCover, timeScale, percentScale);
-		// drawPath(cloud, ctx, {
-		// 	strokeStyle: 'lightgrey',
-		// 	lineWidth: 3,
-		// });
-
-		// // precip
-		// const precip = createPath(this.data.probabilityOfPrecipitation, timeScale, percentScale);
-		// drawPath(precip, ctx, {
-		// 	strokeStyle: 'aqua',
-		// 	lineWidth: 3,
-		// });
-
-		// // temperature
-		// const minTemp = Math.min(...this.data.temperature);
-		// const maxTemp = Math.max(...this.data.temperature);
-		// const midTemp = Math.round((minTemp + maxTemp) / 2);
-		// const tempScale = calcScale(minTemp, availableHeight - 10, maxTemp, 10);
-		// const tempPath = createPath(this.data.temperature, timeScale, tempScale);
-		// drawPath(tempPath, ctx, {
-		// 	strokeStyle: 'red',
-		// 	lineWidth: 3,
-		// });
-
-		// // temperature axis labels
-		// // limited to 3 characters, sacraficing degree character
-		// const degree = String.fromCharCode(176);
-		// this.elem.querySelector('.y-axis .l-1').innerHTML = (maxTemp + degree).substring(0, 3);
-		// this.elem.querySelector('.y-axis .l-2').innerHTML = (midTemp + degree).substring(0, 3);
-		// this.elem.querySelector('.y-axis .l-3').innerHTML = (minTemp + degree).substring(0, 3);
-
-		// set the image source
-		// this.image.src = canvas.toDataURL();
-
+	async drawCanvas() {
 		super.drawCanvas();
+
+		console.log('Marine data', this.marineData);
+		console.log('data', this.data.windSpeed);
+
+		const advisoryFill = {
+			message: 'SMALL CRAFT ADVISORY', // @todo: this is a placeholder, should be derived from wave height and period
+		};
+		this.fillTemplate('advisory', advisoryFill);	// @todo: this isn't filling the template, need to fix this
+
+		// create each day template
+		const days = this.marineData.map((period) => {
+			const fill = {
+				// icon: { type: 'img', src: Day.icon }, // @todo: add icon support for marine forecast
+				date: period.text,
+				'wind-direction': period.windWaveDirection,
+				'wind-speed': `${this.data.windSpeed[period.text.toLowerCase()].min}-${this.data.windSpeed[period.text.toLowerCase()].max}kts`,
+				'wave-height': `${metersToFeet(period.waveHeight)}'`,
+				'wave-condition': 'CHOPPY', // @todo: this is a placeholder, should be derived from wave height and period
+			};
+
+			const { low } = period;
+			if (low !== undefined) {
+				fill['value-lo'] = period.swellWaveHeight;
+			}
+
+			const { high } = period;
+			if (high !== undefined) {
+				fill['value-hi'] = period.swellWaveHeight;
+			}
+
+			// return the filled template
+			return this.fillTemplate('day', fill);
+		});
+
+		// empty and update the container
+		const dayContainer = this.elem.querySelector('.day-container');
+		dayContainer.innerHTML = '';
+		dayContainer.append(...days);
+		this.finishDraw();
+
 		this.finishDraw();
 	}
 }
 
+const aggregateHourlyData = (hourlyDataArray, startingPosition, endingPosition) => {
+	if (!hourlyDataArray || hourlyDataArray.length === 0) {
+		console.error('MarineForecast: aggregateHourlyData() - No hourly data available for aggregation');
+	}
+	const start = startingPosition || 0;
+	const end = endingPosition || hourlyDataArray.length;
+
+	const selectedHours = hourlyDataArray.slice(start, end);
+
+	const average = Math.round((selectedHours.reduce((sum, value) => sum + value, 0) / selectedHours.length) * 100) / 100;
+
+	return average;
+};
+
 const parseMarineData = (weatherParameters) => {
-	console.log('Parsing marine data', weatherParameters);
+	const aggregatedMarineforecast = [];
+
+	// construct "today" object
+	const today = {
+		text: 'Today',
+		swellWaveDirection: directionToNSEW(Math.floor(aggregateHourlyData(weatherParameters.hourly.swell_wave_direction, 0, 11))),
+		swellWaveHeight: aggregateHourlyData(weatherParameters.hourly.swell_wave_height, 0, 11),
+		swellWavePeriod: aggregateHourlyData(weatherParameters.hourly.swell_wave_period, 0, 11),
+		waveHeight: aggregateHourlyData(weatherParameters.hourly.wave_height, 0, 11),
+		windWaveDirection: directionToNSEW(Math.floor(aggregateHourlyData(weatherParameters.hourly.wind_wave_direction, 0, 11))),
+	};
+
+	// construct "tonight" object
+	const tonight = {
+		text: 'Tonight',
+		swellWaveDirection: directionToNSEW(Math.floor(aggregateHourlyData(weatherParameters.hourly.swell_wave_direction, 12, 23))),
+		swellWaveHeight: aggregateHourlyData(weatherParameters.hourly.swell_wave_height, 12, 23),
+		swellWavePeriod: aggregateHourlyData(weatherParameters.hourly.swell_wave_period, 12, 23),
+		waveHeight: aggregateHourlyData(weatherParameters.hourly.wave_height, 12, 23),
+		windWaveDirection: directionToNSEW(Math.floor(aggregateHourlyData(weatherParameters.hourly.wind_wave_direction, 12, 23))),
+	};
+
+	aggregatedMarineforecast.push(today, tonight);
+
+	return aggregatedMarineforecast;
 };
 
 // register display
-registerDisplay(new MarineForecast(12, 'marine-forecast'));
+registerDisplay(new MarineForecast(12, 'marine-forecast', true));
