@@ -51,7 +51,8 @@ const init = () => {
 		[1.25, 'Slow'],
 		[1.5, 'Very Slow'],
 	]);
-	settings.hideWebamp = new Setting('hideWebamp', 'Hide Webamp', 'checkbox', false, hideWebampChange, true);
+	settings.hideWebamp = new Setting('hideWebamp', 'Hide Webamp (Winamp)', 'checkbox', false, hideWebampChange, true);
+	settings.hideScanLines = new Setting('hideScanLines', 'Enable Scan Lines', 'checkbox', false, hideScanLinesChange, true);
 
 	settings.wide = new Setting('wide', 'Widescreen', 'checkbox', false, wideScreenChange, true);
 	settings.kiosk = new Setting('kiosk', 'Kiosk', 'boolean', false, kioskChange, false);
@@ -106,6 +107,15 @@ const hideWebampChange = (value) => {
 	} else {
 		// eslint-disable-next-line no-undef
 		webamp.reopen();
+	}
+};
+
+const hideScanLinesChange = (value) => {
+	const container = document.querySelector('#divTwc');
+	if (value) {
+		container.classList.add('scan-lines');
+	} else {
+		container.classList.remove('scan-lines');
 	}
 };
 
