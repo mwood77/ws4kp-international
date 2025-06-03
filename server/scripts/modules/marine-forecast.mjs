@@ -11,19 +11,7 @@ import ConversionHelpers from './utils/conversionHelpers.mjs';
 class MarineForecast extends WeatherDisplay {
 	constructor(navId, elemId, defaultActive) {
 		super(navId, elemId, 'Marine Forecast', defaultActive);
-
-		// move the top right data into the correct location on load
-		document.addEventListener('DOMContentLoaded', () => {
-			// this.moveHeader();
-		});
 	}
-
-	// moveHeader() {
-	// 	// get the header
-	// 	const header = this.fillTemplate('top-right', {});
-	// 	// place the header
-	// 	this.elem.querySelector('.header .right').append(header);
-	// }
 
 	async getMarineData(_weatherParameters) {
 		if (!super.getMarineData(_weatherParameters)) return;

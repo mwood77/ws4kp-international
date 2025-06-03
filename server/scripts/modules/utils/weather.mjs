@@ -1,7 +1,7 @@
 import { json } from './fetch.mjs';
 
 const openMeteoAdditionalForecastParameters = '&daily=temperature_2m_max,uv_index_max,temperature_2m_min&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,apparent_temperature,precipitation_probability,precipitation,rain,showers,snowfall,snow_depth,weather_code,pressure_msl,surface_pressure,cloud_cover,visibility,evapotranspiration,et0_fao_evapotranspiration,vapour_pressure_deficit,uv_index,uv_index_clear_sky,is_day,sunshine_duration,wet_bulb_temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m&models=best_match&timezone=auto';
-const openMeteoAdditionalForecastParametersMarine = '&hourly=swell_wave_height,swell_wave_direction,swell_wave_period&timezone=auto&forecast_days=1';
+const openMeteoAdditionalForecastParametersMarine = '&hourly=wave_height,wind_wave_direction,swell_wave_height,swell_wave_height,swell_wave_direction,swell_wave_period&timezone=auto&forecast_days=1';
 
 const getPoint = async (lat, lon) => {
 	try {
