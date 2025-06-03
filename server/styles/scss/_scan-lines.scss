@@ -1,0 +1,28 @@
+@mixin scan-lines {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.1),
+      rgba(0, 0, 0, 0.1) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    z-index: 10;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+  }
+}
+
+// Only apply scan lines when #divTwc has the class
+body #divTwc.scan-lines #container {
+  @include scan-lines;
+}
