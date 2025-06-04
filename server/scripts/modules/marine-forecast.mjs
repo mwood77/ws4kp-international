@@ -4,7 +4,7 @@ import STATUS from './status.mjs';
 import { loadImg } from './utils/image.mjs';
 import WeatherDisplay from './weatherdisplay.mjs';
 import { registerDisplay } from './navigation.mjs';
-import { directionToNSEW } from './utils/calc.mjs';
+import { directionToNSEW, calculateSeasCondition, getMarineAdvisory } from './utils/calc.mjs';
 import { kphToKnots, metersToFeet } from './utils/units.mjs';
 import { aggregateWeatherForecastData } from './utils/weather.mjs';
 
@@ -63,23 +63,28 @@ class MarineForecast extends WeatherDisplay {
 	async drawCanvas() {
 		super.drawCanvas();
 
-		console.log('Marine data', this.marineData);
-		console.log('data', this.data.windSpeed);
+		// console.log('Marine data', this.marineData);
+		// console.log('data', this.data.windSpeed);
+
+		const waveConditionText = this.marineData.map((period) => calculateSeasCondition(period).toUpperCase());
+
+		const time = new Date();
+		const isAfterFivePM = time.getHours() >= 17;
+		const advisoryText = isAfterFivePM ? getMarineAdvisory(this.marineData[1]) : getMarineAdvisory(this.marineData[0]);
 
 		const advisoryFill = {
-			message: 'SMALL CRAFT ADVISORY', // @todo: this is a placeholder, should be derived from wave height and period
+			message: advisoryText,
 		};
-		this.fillTemplate('advisory', advisoryFill);	// @todo: this isn't filling the template, need to fix this
 
 		// create each day template
-		const days = this.marineData.map((period) => {
+		const days = this.marineData.map((period, index) => {
 			const fill = {
 				// icon: { type: 'img', src: Day.icon }, // @todo: add icon support for marine forecast
 				date: period.text,
 				'wind-direction': period.windWaveDirection,
 				'wind-speed': `${this.data.windSpeed[period.text.toLowerCase()].min}-${this.data.windSpeed[period.text.toLowerCase()].max}kts`,
 				'wave-height': `${metersToFeet(period.waveHeight)}'`,
-				'wave-condition': 'CHOPPY', // @todo: this is a placeholder, should be derived from wave height and period
+				'wave-condition': `${waveConditionText[index]}`,
 			};
 
 			const { low } = period;
@@ -100,7 +105,17 @@ class MarineForecast extends WeatherDisplay {
 		const dayContainer = this.elem.querySelector('.day-container');
 		dayContainer.innerHTML = '';
 		dayContainer.append(...days);
-		this.finishDraw();
+
+		const advisoryContainer = this.elem.querySelector('.advisory-container');
+		advisoryContainer.classList.add('hidden-border');
+		advisoryContainer.innerHTML = '';
+
+		// @todo: this is real ugly, fix it.
+		if (advisoryText.message[0] !== 'No Advisory') {
+			const preparedTemplate = this.fillTemplate('advisory', advisoryFill);
+			advisoryContainer.append(preparedTemplate);
+			advisoryContainer.classList.remove('hidden-border');
+		}
 
 		this.finishDraw();
 	}

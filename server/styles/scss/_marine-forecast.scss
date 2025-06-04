@@ -7,7 +7,7 @@
 
 
 .weather-display .main.marine-forecast {
-
+	
     .advisory-container {
 		margin-top: 16px;
         border: 4px solid black;
@@ -16,6 +16,10 @@
         margin-top: 20px;
         height: 36px;
         width: 80%;
+
+		&.hidden-border {
+			border: none;
+		}
 	}
 
     .message {
