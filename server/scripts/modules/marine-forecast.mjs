@@ -4,6 +4,7 @@ import STATUS from './status.mjs';
 import { loadImg } from './utils/image.mjs';
 import WeatherDisplay from './weatherdisplay.mjs';
 import { registerDisplay } from './navigation.mjs';
+import { getWaveIconFromCondition } from './icons.mjs';
 import { directionToNSEW, calculateSeasCondition, getMarineAdvisory } from './utils/calc.mjs';
 import { kphToKnots, metersToFeet } from './utils/units.mjs';
 import { aggregateWeatherForecastData } from './utils/weather.mjs';
@@ -79,7 +80,7 @@ class MarineForecast extends WeatherDisplay {
 		// create each day template
 		const days = this.marineData.map((period, index) => {
 			const fill = {
-				// icon: { type: 'img', src: Day.icon }, // @todo: add icon support for marine forecast
+				'wave-icon': { type: 'img', src: getWaveIconFromCondition(waveConditionText[index]) },
 				date: period.text,
 				'wind-direction': period.windWaveDirection,
 				'wind-speed': `${this.data.windSpeed[period.text.toLowerCase()].min}-${this.data.windSpeed[period.text.toLowerCase()].max}kts`,

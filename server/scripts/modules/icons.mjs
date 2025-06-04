@@ -11,6 +11,39 @@ function isNightTime(timeZone) {
 	return hour >= 18 || hour < 6;
 }
 
+const getWaveIconFromCondition = (condition) => {
+	const addPath = (icon) => `images/r/${icon}`;
+
+	let tidyText = condition.toLowerCase();
+	if (tidyText.includes(' ')) tidyText = tidyText.replaceAll(' ', '-');
+
+	switch (tidyText) {
+		case 'smooth':
+			return addPath('smooth.gif');
+		case 'slight':
+			// return addPath('slight.gif');
+			// return addPath('light-chop.svg');
+			return addPath('choppy.svg');
+		case 'choppy':
+			return addPath('choppy.svg');
+		case 'mdt-chop':
+			return addPath('mdt-chop.gif');
+		case 'rough':
+			return addPath('rough.gif');
+		case 'v-rough':
+			return addPath('v-rough.gif');
+		case 'high':
+			return addPath('high.gif');
+		case 'v-high':
+			return addPath('v-high.gif');
+		case 'phenomenal':
+			return addPath('phenomenal.gif');
+		default:
+			console.log(`Unable to locate wave icon for: ${condition}`);
+			return addPath('Logo3.gif');
+	}
+};
+
 const getWeatherRegionalIconFromIconLink = (text, isDay) => {
 	// internal function to add path to returned icon
 	const addPath = (icon) => `images/r/${icon}`;
@@ -344,5 +377,6 @@ const getWeatherIconFromIconLink = (text, timeZone, extendedForecast) => {
 export {
 	getWeatherIconFromIconLink,
 	getWeatherRegionalIconFromIconLink,
+	getWaveIconFromCondition,
 	// getHourlyIcon,
 };
