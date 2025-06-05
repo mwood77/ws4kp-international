@@ -29,6 +29,24 @@
         @include u.text-shadow();
     }
 
+	.api-failure-container {
+		display: flex;
+		width: 100%;
+		justify-content: center;
+
+		.message {
+			font-size: 24pt;
+			text-align: center;
+			margin-top: 16px;
+			@include u.text-shadow();
+			// color: c.$extended-low;
+			padding: 1rem;
+			border: 4px solid rgb(213, 53, 53);
+			box-sizing: border-box;
+			background-color: rgba(213, 53, 53, 0.8);
+		}
+	}
+
     .title-and-day-container {
         display: flex;
     }

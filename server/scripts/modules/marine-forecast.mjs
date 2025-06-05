@@ -54,6 +54,25 @@ class MarineForecast extends WeatherDisplay {
 		if (!super.getMarineData(_marineData)) return;
 		this.setStatus(STATUS.loading);
 
+		// Check if API data is available, if not present error message
+		// Must also remove all templates from data screen ...
+		if (!_marineData) {
+			const dayContainer = this.elem.querySelector('.day-container');
+			const titleContainer = this.elem.querySelector('.title-container');
+			const advisoryContainer = this.elem.querySelector('.advisory-container');
+			dayContainer.innerHTML = '';
+			titleContainer.innerHTML = '';
+			advisoryContainer.innerHTML = '';
+			advisoryContainer.classList.add('hidden-border');
+
+			console.error('MarineForecast: No marine data provided, unable to load marine forecast.');
+			this.setStatus(STATUS.loaded);
+		} else {
+			const apiFailureContainer = this.elem.querySelector('.api-failure-container');
+			apiFailureContainer.innerHTML = '';
+			apiFailureContainer.remove();
+		}
+
 		this.marineData = parseMarineData(_marineData);
 		this.data = this.handleWindSpeed(_weatherParameters);
 
