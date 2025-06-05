@@ -72,6 +72,7 @@ This is handled automatically as part of CI/CD, when your code is merged to `mai
 
 ## Updates in 8.0.0
 - Introduces [Webamp](https://github.com/captbaritone/webamp)
+	- Music is streamed from the Internet Archive and the playlist is a chunk of [*Weatherscan Music: The TRUE Complete Collection*](https://archive.org/details/weatherscancompletecollection/01+Fair+Weather.mp3)
 - Time is now configurable between 12-hour and 24-hour formats
 - Hourly forecast is now retrieved using timezone instead of toISOString
 - Scan lines
