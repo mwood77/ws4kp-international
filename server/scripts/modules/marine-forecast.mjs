@@ -108,7 +108,6 @@ class MarineForecast extends WeatherDisplay {
 		advisoryContainer.classList.add('hidden-border');
 		advisoryContainer.innerHTML = '';
 
-		console.log('Advisory Text:', advisoryText);
 		if (advisoryText !== '') {
 			const preparedTemplate = this.fillTemplate('advisory', advisoryFill);
 			advisoryContainer.append(preparedTemplate);
@@ -162,4 +161,4 @@ const parseMarineData = (weatherParameters) => {
 };
 
 // register display
-registerDisplay(new MarineForecast(12, 'marine-forecast', true));
+registerDisplay(new MarineForecast(11, 'marine-forecast'));

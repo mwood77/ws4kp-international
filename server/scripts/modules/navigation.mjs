@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
 	init();
 });
 
+// @todo - absolutely gnarly, but displays must be SEQUENTIALLY LOADED & REGISTERED.
+// you CANNOT set an arbitrary display navId to "21" and expect it to work.
+// doing this will cause the logic to insert a number of nulls into the array between the
+// last known display and the "next one" (ex.[1,2,3, ...NULLx17, 21])
 const displays = [];
 let playing = false;
 let progress;
