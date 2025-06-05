@@ -6,6 +6,11 @@ const round2 = (value, decimals) => Math.trunc(value * 10 ** decimals) / 10 ** d
 const kphToKnots = (Kph) => Math.round((Kph * 0.539957) * 100) / 100; // 2 decimal places
 const kphToMs = (Kph) => Math.round((Kph / 3.6) * 100) / 100;		// 2 decimal places
 const kphToMph = (Kph) => Math.round(Kph / 1.609_34);
+const knotsToMs = (Knots) => {
+	const result = Math.round((Knots * 0.514_444) * 100) / 100; // 2 decimal places
+	console.log(`Converted ${Knots} knots to ${result} m/s`);
+	return result;
+};
 
 // Temperature conversions
 const celsiusToFahrenheit = (Celsius) => Math.round((Celsius * 9) / 5 + 32);
@@ -28,6 +33,7 @@ export {
 	kphToKnots,
 	kphToMs,
 	kphToMph,
+	knotsToMs,
 
 	celsiusToFahrenheit,
 	celsiusToKelvin,
