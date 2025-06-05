@@ -25,18 +25,50 @@ const getMarineDataModels = () => {
 		'era5_ocean',
 	];
 
-	// Marine API is currently bugged. See: https://github.com/open-meteo/open-meteo/issues/1364
-	return `&models=${models[5]}`;
+	return models;
 };
 
+function isValidMarineResponse(data) {
+	if (!data || !data.hourly) return false;
+
+	const fieldsToCheck = [
+		'swell_wave_direction',
+		'swell_wave_height',
+		'swell_wave_period',
+		'wave_height',
+		'wind_wave_direction',
+	];
+
+	return fieldsToCheck.every((key) => {
+		const arr = data.hourly[key];
+		return Array.isArray(arr) && arr.some((v) => v !== null);
+	});
+}
+
 const getMarinePoint = async (lat, lon) => {
-	try {
-		return await json(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}${openMeteoAdditionalForecastParametersMarine}${getMarineDataModels()}`);
-	} catch (error) {
-		console.log(`Unable to get marine point ${lat}, ${lon}`);
-		console.error(error);
-		return false;
+	const availableModels = getMarineDataModels();
+
+	const urls = availableModels.map((model) => `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}${openMeteoAdditionalForecastParametersMarine}&models=${model}`);
+
+	// Open-Meteo's Marine API returns incorrect status codes, and
+	// populates fields with null values depending on the location / model.
+	// See: https://github.com/open-meteo/open-meteo/issues/1364
+	const results = await Promise.allSettled(urls.map((url) => json(url)));
+
+	// eslint-disable-next-line no-plusplus
+	for (let i = 0; i < results.length; i++) {
+		const result = results[i];
+		const model = availableModels[i];
+		console.debug(`Checking marine data from model "${model}"...`);
+
+		if (result.status === 'fulfilled' && isValidMarineResponse(result.value)) {
+			console.info(`Marine data from model "${model}" is valid.`);
+			return result.value;
+		}
 	}
+
+	console.error('All marine data models returned null or invalid arrays.');
+	return null;
 };
 
 const getGeocoding = async (name) => {
