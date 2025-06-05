@@ -6,8 +6,10 @@ import WeatherDisplay from './weatherdisplay.mjs';
 import { registerDisplay } from './navigation.mjs';
 import { getWaveIconFromCondition } from './icons.mjs';
 import { directionToNSEW, calculateSeasCondition, getMarineAdvisory } from './utils/calc.mjs';
-import { kphToKnots, metersToFeet } from './utils/units.mjs';
+import { kphToKnots } from './utils/units.mjs';
 import { aggregateWeatherForecastData } from './utils/weather.mjs';
+
+import ConversionHelpers from './utils/conversionHelpers.mjs';
 
 class MarineForecast extends WeatherDisplay {
 	constructor(navId, elemId, defaultActive) {
@@ -36,8 +38,8 @@ class MarineForecast extends WeatherDisplay {
 		// tonight wind speed
 		const tonightWindSpeedValues = aggregatedForecastData[onlyToday].hours.slice(12, 24).map((hour) => hour.wind_speed_10m);
 		const averageTonightWindSpeed = {
-			min: Math.round(kphToKnots(Math.min(...tonightWindSpeedValues))),
-			max: Math.round(kphToKnots(Math.max(...tonightWindSpeedValues))),
+			min: ConversionHelpers.convertMarineWindUnitsFromKnots(Math.round(kphToKnots(Math.min(...tonightWindSpeedValues)))),
+			max: ConversionHelpers.convertMarineWindUnitsFromKnots(Math.round(kphToKnots(Math.max(...tonightWindSpeedValues)))),
 		};
 
 		this.setStatus(STATUS.loaded);
@@ -99,8 +101,8 @@ class MarineForecast extends WeatherDisplay {
 				'wave-icon': { type: 'img', src: getWaveIconFromCondition(waveConditionText[index]) },
 				date: period.text,
 				'wind-direction': period.windWaveDirection,
-				'wind-speed': `${this.data.windSpeed[period.text.toLowerCase()].min}-${this.data.windSpeed[period.text.toLowerCase()].max}kts`,
-				'wave-height': `${metersToFeet(period.waveHeight)}'`,
+				'wind-speed': `${this.data.windSpeed[period.text.toLowerCase()].min}-${this.data.windSpeed[period.text.toLowerCase()].max}${ConversionHelpers.getMarineWindUnitText()}`,
+				'wave-height': `${ConversionHelpers.convertWaveHeightUnits(period.waveHeight)}${ConversionHelpers.getWaveHeightUnitText()}`,
 				'wave-condition': `${waveConditionText[index]}`,
 			};
 
