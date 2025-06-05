@@ -64,14 +64,11 @@ class MarineForecast extends WeatherDisplay {
 	async drawCanvas() {
 		super.drawCanvas();
 
-		// console.log('Marine data', this.marineData);
-		// console.log('data', this.data.windSpeed);
-
 		const waveConditionText = this.marineData.map((period) => calculateSeasCondition(period).toUpperCase());
 
 		const time = new Date();
 		const isAfterFivePM = time.getHours() >= 17;
-		const advisoryText = isAfterFivePM ? getMarineAdvisory(this.marineData[1]) : getMarineAdvisory(this.marineData[0]);
+		const advisoryText = isAfterFivePM ? getMarineAdvisory(this.marineData[1], this.data.windSpeed) : getMarineAdvisory(this.marineData[0], this.data.windSpeed);
 
 		const advisoryFill = {
 			message: advisoryText,
@@ -111,8 +108,8 @@ class MarineForecast extends WeatherDisplay {
 		advisoryContainer.classList.add('hidden-border');
 		advisoryContainer.innerHTML = '';
 
-		// @todo: this is real ugly, fix it.
-		if (advisoryText.message[0] !== 'No Advisory') {
+		console.log('Advisory Text:', advisoryText);
+		if (advisoryText !== '') {
 			const preparedTemplate = this.fillTemplate('advisory', advisoryFill);
 			advisoryContainer.append(preparedTemplate);
 			advisoryContainer.classList.remove('hidden-border');

@@ -29,43 +29,49 @@ const calculateSeasCondition = (periodMarineData) => {
 	return 'phenomenal';
 };
 
-function getMarineAdvisory(periodMarineData) {
+function getMarineAdvisory(periodMarineData, dailyWindMinMaxInKnots) {
 	periodMarineData.waveHeight = parseFloat(periodMarineData.waveHeight);
 	periodMarineData.swellPeriod = parseFloat(periodMarineData.swellPeriod);
-	periodMarineData.windSpeed = periodMarineData.windSpeed ? parseFloat(periodMarineData.windSpeed) : null;
 
-	const advisories = [];
+	let advisory = '';
+
+	// Test data for advisory
+	periodMarineData.waveHeight = 1.4; // triggers "Small Craft Advisory"
+	// periodMarineData.waveHeight = 3.0;   // triggers "Rough Seas Advisory"
+	// periodMarineData.waveHeight = 5;   // triggers "Hazardous Seas Advisory"
 
 	// Advisory based on wave height alone
 	if (periodMarineData.waveHeight >= 1.2 && periodMarineData.waveHeight < 2.1) {
-		advisories.push('Small Craft Advisory');
+		advisory = 'Small Craft Advisory';
 	}
 
-	if (periodMarineData.waveHeight >= 2.1 && periodMarineData.aveHeight < 4) {
-		advisories.push('Rough Seas Advisory');
+	if (periodMarineData.waveHeight >= 2.1 && periodMarineData.waveHeight < 4) {
+		advisory = 'Rough Seas Advisory';
 	}
 
 	if (periodMarineData.waveHeight >= 4) {
-		advisories.push('Hazardous Seas Warning');
+		advisory = 'Hazardous Seas Warning';
 	}
 
-	// Add wind-based advisories
-	if (periodMarineData.windSpeed) {
-		if (periodMarineData.windSpeed >= 20 && periodMarineData.windSpeed < 34) {
-			advisories.push('Small Craft Advisory (Wind)');
-		} else if (periodMarineData.windSpeed >= 34 && periodMarineData.windSpeed < 48) {
-			advisories.push('Gale Warning');
-		} else if (periodMarineData.windSpeed >= 48) {
-			advisories.push('Storm Warning');
-		}
+	const maxWind = dailyWindMinMaxInKnots[periodMarineData.text.toLowerCase()].max;
+
+	// Wind Modifiers
+	if (maxWind >= 20 && maxWind < 34) {
+		advisory += ' (Wind)';
+	} else if (maxWind >= 34 && maxWind < 48) {
+		advisory += ' (Gale)';
+	} else if (maxWind >= 48) {
+		advisory += ' (Storm)';
 	}
 
 	// Additional rough surf warning for short-period steep waves
 	if (periodMarineData.waveHeight >= 1.5 && periodMarineData.swellPeriod < 5) {
-		advisories.push('Rough Surf Advisory');
+		// overwrite advisory if it exists
+		advisory = '';
+		advisory = 'Rough Surf Advisory';
 	}
 
-	return advisories.length ? advisories : ['No Advisory'];
+	return advisory.toUpperCase();
 }
 
 const distance = (x1, y1, x2, y2) => Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
