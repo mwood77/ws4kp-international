@@ -106,16 +106,6 @@ class MarineForecast extends WeatherDisplay {
 				'wave-condition': `${waveConditionText[index]}`,
 			};
 
-			const { low } = period;
-			if (low !== undefined) {
-				fill['value-lo'] = period.swellWaveHeight;
-			}
-
-			const { high } = period;
-			if (high !== undefined) {
-				fill['value-hi'] = period.swellWaveHeight;
-			}
-
 			// return the filled template
 			return this.fillTemplate('day', fill);
 		});

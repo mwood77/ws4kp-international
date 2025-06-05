@@ -8,7 +8,6 @@ const kphToMs = (Kph) => Math.round((Kph / 3.6) * 100) / 100;		// 2 decimal plac
 const kphToMph = (Kph) => Math.round(Kph / 1.609_34);
 const knotsToMs = (Knots) => {
 	const result = Math.round((Knots * 0.514_444) * 100) / 100; // 2 decimal places
-	console.log(`Converted ${Knots} knots to ${result} m/s`);
 	return result;
 };
 

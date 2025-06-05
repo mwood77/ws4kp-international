@@ -36,7 +36,7 @@ function getMarineAdvisory(periodMarineData, dailyWindMinMaxInKnots) {
 	let advisory = '';
 
 	// Test data for advisory
-	periodMarineData.waveHeight = 1.4; // triggers "Small Craft Advisory"
+	// periodMarineData.waveHeight = 1.4; // triggers "Small Craft Advisory"
 	// periodMarineData.waveHeight = 3.0;   // triggers "Rough Seas Advisory"
 	// periodMarineData.waveHeight = 5;   // triggers "Hazardous Seas Advisory"
 

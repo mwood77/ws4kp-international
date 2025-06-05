@@ -143,7 +143,6 @@ const getMarineForecast = async (latLon, haveDataCallback) => {
 	displays.forEach((display) => {
 		if (display.name === 'Marine Forecast') {
 			display.getMarineData(point, marinePoint);
-			// display.getData(weatherParameters);
 		}
 	});
 };
