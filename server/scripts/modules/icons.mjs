@@ -18,26 +18,20 @@ const getWaveIconFromCondition = (condition) => {
 	if (tidyText.includes(' ')) tidyText = tidyText.replaceAll(' ', '-');
 
 	switch (tidyText) {
+		case 'calm':
 		case 'smooth':
-			return addPath('smooth.gif');
+			return addPath('smooth.svg');
 		case 'slight':
-			// return addPath('slight.gif');
-			// return addPath('light-chop.svg');
-			return addPath('choppy.svg');
+		case 'mdt-chop':
+			return addPath('slight.svg');
 		case 'choppy':
 			return addPath('choppy.svg');
-		case 'mdt-chop':
-			return addPath('mdt-chop.gif');
 		case 'rough':
-			return addPath('rough.gif');
 		case 'v-rough':
-			return addPath('v-rough.gif');
 		case 'high':
-			return addPath('high.gif');
 		case 'v-high':
-			return addPath('v-high.gif');
 		case 'phenomenal':
-			return addPath('phenomenal.gif');
+			return addPath('rough.svg');
 		default:
 			console.log(`Unable to locate wave icon for: ${condition}`);
 			return addPath('Logo3.gif');
