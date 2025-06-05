@@ -1,0 +1,134 @@
+@use 'shared/_colors'as c;
+@use 'shared/_utils'as u;
+
+#marine-forecast-html.weather-display {
+	background-image: url('../images/BackGround8_1.png');
+}
+
+
+.weather-display .main.marine-forecast {
+	
+    .advisory-container {
+		margin-top: 16px;
+        border: 4px solid black;
+        box-sizing: border-box;
+        margin: 0 auto;
+        margin-top: 20px;
+        height: 36px;
+        width: 80%;
+
+		&.hidden-border {
+			border: none;
+		}
+	}
+
+    .message {
+        font-size: 24pt;
+        text-align: center;
+        margin-top: -4px;
+        @include u.text-shadow();
+    }
+
+	.api-failure-container {
+		display: flex;
+		width: 100%;
+		justify-content: center;
+
+		.message {
+			font-size: 24pt;
+			text-align: center;
+			margin-top: 16px;
+			@include u.text-shadow();
+			padding: 1rem;
+			border: 4px solid rgb(213, 53, 53);
+			box-sizing: border-box;
+			background-color: rgba(213, 53, 53, 0.8);
+		}
+	}
+
+    .title-and-day-container {
+        display: flex;
+    }
+
+    .title {
+        @include u.text-shadow();
+        font-family: 'Star4000';
+        font-size: 24pt;
+        margin-left: 27px;
+        margin-top: 48px;
+        flex-grow: 1;
+    }
+
+    .seas {
+        margin-top: 78px;
+    }
+
+	.day-container {
+		margin-top: 4px;
+	}
+
+    .titles {
+  		@include u.text-shadow();
+		font-family: 'Star4000';
+		font-size: 24pt;
+    }
+
+	.day {
+		@include u.text-shadow();
+		padding: 5px;
+		height: 285px;
+		width: 215px;
+		display: inline-block;
+		margin: 0px 15px;
+		font-family: 'Star4000';
+		font-size: 24pt;
+
+		.date {
+			text-align: center;
+			color: c.$title-color;
+		}
+
+        .wind-speed {
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        .wave-container {
+            border: 4px solid c.$extended-low;
+            width: 80%;
+            height: 124px;
+            box-sizing: border-box;
+            margin: 0 auto;
+        }
+
+        .wave-height {
+            text-align: center;
+            margin-top: 6px;
+        }
+
+        .wave-icon {
+            height: 48px;
+			margin-top: 6px;
+			text-align: center;
+        }
+
+        .wave-condition {
+            text-align: center;
+            margin-top: -15px;
+        }
+
+		.wind-direction {
+			text-align: center;
+			margin-top: 4px;
+		}
+
+		.icon {
+			text-align: center;
+			height: 75px;
+
+			img {
+				max-height: 75px;
+			}
+		}
+	}
+}

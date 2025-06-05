@@ -63,10 +63,21 @@ This will update the artifacts in the `/docs` folder. Simply commit them as part
 #### Docker Image
 This is handled automatically as part of CI/CD, when your code is merged to `main`.
 
+## Updates in 9.0.0
+
+>[!IMPORTANT]
+> The Marine Forecast (and this site in general) **should not** be used in life threatening weather situations, or be relied on to inform the public of such situations. It is your responsibility to check your local forecast and make an informed decision. See [Disclaimer](#disclaimer)
+
+- Marine Forecast powered by [Open Meteo's Marine API](https://open-meteo.com/en/docs/marine-weather-api)
+
 ## Updates in 8.0.0
 - Introduces [Webamp](https://github.com/captbaritone/webamp)
+	- Music is streamed from the Internet Archive and the playlist is a chunk of [*Weatherscan Music: The TRUE Complete Collection*](https://archive.org/details/weatherscancompletecollection/01+Fair+Weather.mp3)
 - Time is now configurable between 12-hour and 24-hour formats
 - Hourly forecast is now retrieved using timezone instead of toISOString
+- Scan lines
+- Pressure in mmHg added
+- Wipe reveal effect added to scrolling conditions
 
 ## Updates in 7.0.0
 - Weather units are now customizable. These are broken down by category, which are:

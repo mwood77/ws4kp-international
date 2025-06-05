@@ -2,7 +2,9 @@
 import noSleep from './utils/nosleep.mjs';
 import STATUS from './status.mjs';
 import { wrap } from './utils/calc.mjs';
-import { getPoint, getGeocoding, aggregateWeatherForecastData } from './utils/weather.mjs';
+import {
+	getPoint, getMarinePoint, getGeocoding, aggregateWeatherForecastData,
+} from './utils/weather.mjs';
 import settings from './settings.mjs';
 
 import { parseQueryString } from './share.mjs';
@@ -11,6 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
 	init();
 });
 
+// @todo - absolutely gnarly, but displays must be SEQUENTIALLY LOADED & REGISTERED.
+// you CANNOT set an arbitrary display navId to "21" and expect it to work.
+// doing this will cause the logic to insert a number of nulls into the array between the
+// last known display and the "next one" (ex.[1,2,3, ...NULLx17, 21])
 const displays = [];
 let playing = false;
 let progress;
@@ -126,6 +132,19 @@ const getWeather = async (latLon, haveDataCallback) => {
 
 	// call for new data on each display
 	displays.forEach((display) => display.getData(weatherParameters));
+};
+
+const getMarineForecast = async (latLon, haveDataCallback) => {
+	const marinePoint = await getMarinePoint(latLon.lat, latLon.lon, 'marine');
+	const point = await getPoint(latLon.lat, latLon.lon);
+
+	if (typeof haveDataCallback === 'function') haveDataCallback(marinePoint);
+
+	displays.forEach((display) => {
+		if (display.name === 'Marine Forecast') {
+			display.getMarineData(point, marinePoint);
+		}
+	});
 };
 
 // receive a status update from a module {id, value}
@@ -379,6 +398,7 @@ const AssignLastUpdate = (date) => {
 
 const latLonReceived = (data, haveDataCallback) => {
 	getWeather(data, haveDataCallback);
+	getMarineForecast(data, haveDataCallback);
 	AssignLastUpdate(null);
 };
 

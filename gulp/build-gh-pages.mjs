@@ -42,6 +42,7 @@ const mjsSources = [
 	'server/scripts/modules/radar.mjs',
 	'server/scripts/modules/regionalforecast.mjs',
 	'server/scripts/modules/travelforecast.mjs',
+	'server/scripts/modules/marine-forecast.mjs',
 	'server/scripts/modules/progress.mjs',
 	'server/scripts/index.mjs',
 ];

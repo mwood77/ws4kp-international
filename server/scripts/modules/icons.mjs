@@ -11,6 +11,33 @@ function isNightTime(timeZone) {
 	return hour >= 18 || hour < 6;
 }
 
+const getWaveIconFromCondition = (condition) => {
+	const addPath = (icon) => `images/r/${icon}`;
+
+	let tidyText = condition.toLowerCase();
+	if (tidyText.includes(' ')) tidyText = tidyText.replaceAll(' ', '-');
+
+	switch (tidyText) {
+		case 'calm':
+		case 'smooth':
+			return addPath('smooth.svg');
+		case 'slight':
+		case 'mdt-chop':
+			return addPath('slight.svg');
+		case 'choppy':
+			return addPath('choppy.svg');
+		case 'rough':
+		case 'v-rough':
+		case 'high':
+		case 'v-high':
+		case 'phenomenal':
+			return addPath('rough.svg');
+		default:
+			console.log(`Unable to locate wave icon for: ${condition}`);
+			return addPath('Logo3.gif');
+	}
+};
+
 const getWeatherRegionalIconFromIconLink = (text, isDay) => {
 	// internal function to add path to returned icon
 	const addPath = (icon) => `images/r/${icon}`;
@@ -344,5 +371,6 @@ const getWeatherIconFromIconLink = (text, timeZone, extendedForecast) => {
 export {
 	getWeatherIconFromIconLink,
 	getWeatherRegionalIconFromIconLink,
+	getWaveIconFromCondition,
 	// getHourlyIcon,
 };

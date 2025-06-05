@@ -1,0 +1,34 @@
+<%- include('header.ejs', { title:'Marine Forecast', hasTime: true }) %>
+<div class="main has-scroll marine-forecast">
+    <div class="advisory-container">
+        <div class="advisory template">  
+            <div class="message"></div>
+        </div>
+    </div>
+
+    <div class="title-and-day-container">
+        <div class="api-failure-container">
+            <div class="message">MARINE API FAILURE</div>
+        </div>
+        <div class="title-container">
+            <div class="title">WINDS:</div>
+            <div class="title seas">SEAS:</div>
+        </div>
+        <div class="day-container">
+            <div class="day template">  
+                <div class="date"></div>
+                <div class="wind-direction"></div>
+                <div class="wind-speed"></div>
+    
+                <div class="wave-container">
+                    <div class="wave-height"></div>
+                    <div class="wave-icon">
+                        <img src="" />
+                    </div>
+                    <div class="wave-condition"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<%- include('scroll.ejs') %>

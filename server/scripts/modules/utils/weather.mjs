@@ -1,6 +1,7 @@
 import { json } from './fetch.mjs';
 
 const openMeteoAdditionalForecastParameters = '&daily=temperature_2m_max,uv_index_max,temperature_2m_min&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,apparent_temperature,precipitation_probability,precipitation,rain,showers,snowfall,snow_depth,weather_code,pressure_msl,surface_pressure,cloud_cover,visibility,evapotranspiration,et0_fao_evapotranspiration,vapour_pressure_deficit,uv_index,uv_index_clear_sky,is_day,sunshine_duration,wet_bulb_temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m&models=best_match&timezone=auto';
+const openMeteoAdditionalForecastParametersMarine = '&hourly=wave_height,wind_wave_direction,swell_wave_height,swell_wave_height,swell_wave_direction,swell_wave_period&timezone=auto&forecast_days=1';
 
 const getPoint = async (lat, lon) => {
 	try {
@@ -10,6 +11,64 @@ const getPoint = async (lat, lon) => {
 		console.error(error);
 		return false;
 	}
+};
+
+const getMarineDataModels = () => {
+	const models = [
+		'meteofrance_currents',
+		'meteofrance_wave',
+		'ewam',
+		'gwam',
+		'ecmwf_wam025',
+		'ncep_gfswave025',
+		'ncep_gfswave016',
+		'era5_ocean',
+	];
+
+	return models;
+};
+
+function isValidMarineResponse(data) {
+	if (!data || !data.hourly) return false;
+
+	const fieldsToCheck = [
+		'swell_wave_direction',
+		'swell_wave_height',
+		'swell_wave_period',
+		'wave_height',
+		'wind_wave_direction',
+	];
+
+	return fieldsToCheck.every((key) => {
+		const arr = data.hourly[key];
+		return Array.isArray(arr) && arr.some((v) => v !== null);
+	});
+}
+
+const getMarinePoint = async (lat, lon) => {
+	const availableModels = getMarineDataModels();
+
+	const urls = availableModels.map((model) => `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}${openMeteoAdditionalForecastParametersMarine}&models=${model}`);
+
+	// Open-Meteo's Marine API returns incorrect status codes, and
+	// populates fields with null values depending on the location / model.
+	// See: https://github.com/open-meteo/open-meteo/issues/1364
+	const results = await Promise.allSettled(urls.map((url) => json(url)));
+
+	// eslint-disable-next-line no-plusplus
+	for (let i = 0; i < results.length; i++) {
+		const result = results[i];
+		const model = availableModels[i];
+		console.debug(`Checking marine data from model "${model}"...`);
+
+		if (result.status === 'fulfilled' && isValidMarineResponse(result.value)) {
+			console.info(`Marine data from model "${model}" is valid.`);
+			return result.value;
+		}
+	}
+
+	console.error('All marine data models returned null or invalid arrays.');
+	return null;
 };
 
 const getGeocoding = async (name) => {
@@ -179,6 +238,7 @@ const aggregateWeatherForecastData = (getPointResponse) => {
 export {
 	// eslint-disable-next-line import/prefer-default-export
 	getPoint,
+	getMarinePoint,
 	getGeocoding,
 	aggregateWeatherForecastData,
 	getConditionText,

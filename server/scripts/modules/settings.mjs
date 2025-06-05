@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // default speed
 const settings = {
 	windUnits: { value: 2 },
+	marineWindUnits: { value: 1 },
+	marineWaveHeightUnits: { value: 1 },
 	temperatureUnits: { value: 1 },
 	distanceUnits: { value: 1 },
 	pressureUnits: { value: 1 },
@@ -22,6 +24,14 @@ const init = () => {
 		[2, 'km/h'],
 		[3, 'knots'],
 		[4, 'mph'],
+	]);
+	settings.marineWindUnits = new Setting('marineWindUnits', 'Wind Units (Marine)', 'select', 1, marineWindUnitsChange, true, [
+		[1, 'knots'],
+		[2, 'm/s'],
+	]);
+	settings.marineWaveHeightUnits = new Setting('marineWaveHeightUnits', 'Wave Height Units', 'select', 1, marineWaveHeightUnitsChange, true, [
+		[1, 'feet'],
+		[2, 'meters'],
 	]);
 	settings.temperatureUnits = new Setting('temperatureUnits', 'Temperature Units', 'select', 1, temperatureChangeUnits, true, [
 		[1, 'C'],
@@ -82,6 +92,18 @@ const distanceChangeUnits = (value) => {
 const pressureChangeUnits = (value) => {
 	if (value) {
 		document.documentElement.setAttribute('pressure-units', value);
+	}
+};
+
+const marineWaveHeightUnitsChange = (value) => {
+	if (value) {
+		document.documentElement.setAttribute('marine-wave-height-units', value);
+	}
+};
+
+const marineWindUnitsChange = (value) => {
+	if (value) {
+		document.documentElement.setAttribute('marine-wind-units', value);
 	}
 };
 
