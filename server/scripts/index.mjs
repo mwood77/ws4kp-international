@@ -1,7 +1,7 @@
 import { json } from './modules/utils/fetch.mjs';
 import noSleep from './modules/utils/nosleep.mjs';
 import {
-	message as navMessage, isPlaying, resize, resetStatuses, latLonReceived, stopAutoRefreshTimer, registerRefreshData,
+	message as navMessage, hideAllCanvases, isPlaying, resize, resetStatuses, latLonReceived, stopAutoRefreshTimer, registerRefreshData,
 } from './modules/navigation.mjs';
 import { round2 } from './modules/utils/units.mjs';
 import { parseQueryString } from './modules/share.mjs';
@@ -109,21 +109,36 @@ const init = () => {
 	if (play === null || play === 'true') postMessage('navButton', 'play');
 
 	document.querySelector('#btnClearQuery').addEventListener('click', () => {
+		// Stop display at current screen
+		postMessage('navButton', 'stop');
+		localStorage.removeItem('play');
+
+		// remove data location from local storage
+		localStorage.removeItem('latLonQuery');
+		localStorage.removeItem('latLon');
+		localStorage.removeItem('latLonFromGPS');
+
+		// clear html elements
 		document.querySelector('#spanCity').innerHTML = '';
 		document.querySelector('#spanState').innerHTML = '';
-		document.querySelector('#spanStationId').innerHTML = '';
-		document.querySelector('#spanRadarId').innerHTML = '';
-		document.querySelector('#spanZoneId').innerHTML = '';
+
+		const searchBarInput = document.querySelector(TXT_ADDRESS_SELECTOR);
+		searchBarInput.value = '';
+		searchBarInput.blur();
+
+		hideAllCanvases();
+		const loadingId = document.querySelector('#loading');
+		// display is set as style.display = 'none' in navigation.mjs
+		// so we have to set it to '' to show it again;
+		loadingId.style.display = '';
+
+		// document.querySelector('#spanStationId').innerHTML = '';
+		// document.querySelector('#spanRadarId').innerHTML = '';
+		// document.querySelector('#spanZoneId').innerHTML = '';
 
 		document.querySelector('#chkAutoRefresh').checked = true;
 		localStorage.removeItem('autoRefresh');
 
-		localStorage.removeItem('play');
-		postMessage('navButton', 'play');
-
-		localStorage.removeItem('latLonQuery');
-		localStorage.removeItem('latLon');
-		localStorage.removeItem('latLonFromGPS');
 		document.querySelector(BNT_GET_GPS_SELECTOR).classList.remove('active');
 	});
 
