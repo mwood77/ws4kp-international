@@ -71,8 +71,10 @@ class MarineForecast extends WeatherDisplay {
 			this.setStatus(STATUS.loaded);
 		} else {
 			const apiFailureContainer = this.elem.querySelector('.api-failure-container');
-			apiFailureContainer.innerHTML = '';
-			apiFailureContainer.remove();
+			if (apiFailureContainer !== null) {
+				apiFailureContainer.innerHTML = '';
+				apiFailureContainer.remove();
+			}
 		}
 
 		this.marineData = parseMarineData(_marineData);
