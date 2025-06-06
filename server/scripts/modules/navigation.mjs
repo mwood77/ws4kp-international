@@ -456,6 +456,7 @@ const registerRefreshData = (callback) => {
 const timeZone = () => weatherParameters.timeZone;
 
 export {
+	hideAllCanvases,
 	updateStatus,
 	displayNavMessage,
 	resetStatuses,

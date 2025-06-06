@@ -347,6 +347,8 @@ body {
 .heading {
 	font-weight: bold;
 	margin-top: 15px;
+	color: white;
+	@include u.text-shadow();
 }
 
 #settings {

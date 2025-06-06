@@ -14,6 +14,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="images/Logo192.png" />
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
 
   <% if (production) { %>
   <link rel="stylesheet" type="text/css" href="resources/ws.min.css?_=<%=production%>" />
@@ -79,7 +80,7 @@
     <div id="container">
       <div id="loading" width="640" height="480">
         <div>
-          <div class="title">WeatherStar 4000+</div>
+          <div class="title">WeatherStar 4000+ (Intl)</div>
 					<div class="version">v<%- version %></div>
           <div class="instructions">Enter your location above to continue</div>
         </div>
@@ -141,9 +142,28 @@
   </div>
 
   <br />
+  
+  <div class="info">
+    <a class="github-button" href="https://github.com/mwood77/ws4kp-international" data-color-scheme="no-preference: dark_dimmed; light: light; dark: dark;" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star mwood77/ws4kp-international on GitHub">Star</a>
+    <a class="github-button" href="https://github.com/mwood77/ws4kp-international/fork" data-color-scheme="no-preference: dark_dimmed; light: light; dark: dark;" data-icon="octicon-repo-forked" data-size="large" data-show-count="true" aria-label="Fork mwood77/ws4kp-international on GitHub">Fork</a>
+    <a class="github-button" href="https://github.com/mwood77" data-color-scheme="no-preference: dark_dimmed; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Follow @mwood77 on GitHub">Follow @mwood77</a>
+    <a class="github-button" href="https://github.com/mwood77/ws4kp-international/issues" data-color-scheme="no-preference: dark_dimmed; light: light; dark: dark;" data-icon="octicon-issue-opened" data-size="large" data-show-count="true" aria-label="Issue mwood77/ws4kp-international on GitHub">Issue</a>
+    <a class="github-button" href="https://github.com/sponsors/mwood77" data-color-scheme="no-preference: dark_dimmed; light: light; dark: dark;" data-icon="octicon-heart" data-size="large" aria-label="Sponsor @mwood77 on GitHub">Sponsor</a>
+  </div>
+  
+  <div class="info">
+    <br />
+    Welcome to the WeatherStar 4000+ International web app!<br />
+    Background info, linking, Q&A, other uses, and questions?<br />
+    - <a href="https://github.com/mwood77/ws4kp-international#weatherstar-4000-international" target="_blank">Check the readme</a>
+  </div>
 
   <div class="info">
-    <a href="https://github.com/mwood77/ws4kp-international#weatherstar-4000-international">More information</a>
+    <br />
+    Resources & data provided by:<br />
+    - <a href="https://open-meteo.com/en/docs" target="_blank">Open Meteo</a> <br />
+    - <a href="https://archive.org/details/weatherscancompletecollection" target="_blank">Internet Archive</a><br />
+    - <a href="https://twcclassics.com/" target="_blank">TWC Classics</a><br />
   </div>
 
   <div class='heading'>Selected displays</div>
@@ -183,7 +203,7 @@
   <script src="https://unpkg.com/webamp"></script>
   <script>
       const app = document.getElementById("app")
-      const webamp = new Webamp({
+      const webamp = new Webamp({        
           availableSkins: [
             {
               url: "https://archive.org/cors/winampskin_Green-Dimension-V2/Green-Dimension-V2.wsz",
