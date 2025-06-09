@@ -29,6 +29,43 @@ const calculateSeasCondition = (periodMarineData) => {
 	return 'phenomenal';
 };
 
+function calculateAqiPM25(concentration) {
+	// US AQI Standard for PM2.5 (AFAIK same scale used in WS4000+)
+	const breakpoints = [
+		{
+			cLow: 0.0, cHigh: 12.0, iLow: 0, iHigh: 50,
+		},
+		{
+			cLow: 12.1, cHigh: 35.4, iLow: 51, iHigh: 100,
+		},
+		{
+			cLow: 35.5, cHigh: 55.4, iLow: 101, iHigh: 150,
+		},
+		{
+			cLow: 55.5, cHigh: 150.4, iLow: 151, iHigh: 200,
+		},
+		{
+			cLow: 150.5, cHigh: 250.4, iLow: 201, iHigh: 300,
+		},
+		{
+			cLow: 250.5, cHigh: 350.4, iLow: 301, iHigh: 400,
+		},
+		{
+			cLow: 350.5, cHigh: 500.4, iLow: 401, iHigh: 500,
+		},
+	];
+
+	// eslint-disable-next-line no-restricted-syntax
+	for (const bp of breakpoints) {
+		if (concentration >= bp.cLow && concentration <= bp.cHigh) {
+			const aqi = ((bp.iHigh - bp.iLow) / (bp.cHigh - bp.cLow)) * (concentration - bp.cLow) + bp.iLow;
+			return Math.round(aqi);
+		}
+	}
+
+	return null; // concentration is out of range
+}
+
 function getMarineAdvisory(periodMarineData, dailyWindMinMaxInKnots) {
 	periodMarineData.waveHeight = parseFloat(periodMarineData.waveHeight);
 	periodMarineData.swellPeriod = parseFloat(periodMarineData.swellPeriod);
@@ -81,6 +118,7 @@ const wrap = (x, m) => ((x % m) + m) % m;
 
 export {
 	calculateSeasCondition,
+	calculateAqiPM25,
 	getMarineAdvisory,
 	directionToNSEW,
 	distance,
