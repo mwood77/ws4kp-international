@@ -11,6 +11,9 @@ class TravelForecast extends WeatherDisplay {
 		// special height and width for scrolling
 		super(navId, elemId, 'Travel Forecast', defaultActive);
 
+		// Remove from loading screen
+		this.showOnProgress = false;
+
 		// set up the timing
 		this.timing.baseDelay = 20;
 		// page sizes are 4 cities, calculate the number of pages necessary plus overflow
