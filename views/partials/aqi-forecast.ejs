@@ -1,6 +1,29 @@
 <%- include('header.ejs', { titleDual:{ top: 'Air Quality' , bottom: 'Today' }, noaaLogo: false, hasTime: true }) %>
-<div class="main has-scroll aqi">
+<div class="main has-scroll aqi-forecast">
 
+    <div class="ratings-container">
+        <div class="rating">HAZARDOUS</div>
+        <div class="rating">VERY UNHEALTHY</div>
+        <div class="rating">UNHEALTHY</div>
+        <div class="rating">GOOD</div>
+    </div>
+
+    <div class="title-and-day-container">
+        <div class="title-container">
+            <div class="title">SOME CITY, XX</div>
+            <div class="title">SOME CITY, YY</div>
+        </div>
+
+        <div class="value-container">
+            <div class="title">11</div>
+            <div class="title">222</div>
+        </div>
+
+        <div class="value-container">
+            <div class="title">PLACEHOLDER</div>
+            <div class="title">PLACEHOLDER</div>
+        </div>
+    </div>
 
 </div>
 <%- include('scroll.ejs') %>
