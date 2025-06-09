@@ -8,7 +8,7 @@ import { registerDisplay } from './navigation.mjs';
 class AirQualityForecast extends WeatherDisplay {
 	constructor(navId, elemId, defaultActive) {
 		super(navId, elemId, 'Air Quality', defaultActive);
-		this.backgroundImage = loadImg('images/BackGround9_1.png');
+		this.backgroundImage = loadImg('images/Background12.png');
 	}
 
 	// Override because the loading state isn't registering in getMarineData
