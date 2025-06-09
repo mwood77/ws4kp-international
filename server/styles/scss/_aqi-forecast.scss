@@ -50,20 +50,37 @@
 
     .title-and-day-container {
         display: flex;
+		margin-top: 12px;
     }
+
+	.title-container {
+		width: 248px;
+	}
 
     .title {
         @include u.text-shadow();
         font-family: 'Star4000';
-        font-size: 24pt;
+        font-size: 22pt;
         margin-left: 27px;
-        margin-top: 48px;
         flex-grow: 1;
     }
 
 	.value-container {
-		margin-top: 4px;
-		text-align: right;
+		margin-top: 1rem;
+
+		.title {
+			text-align: right;
+			width: 48px;
+			margin-left: 0;
+		}
+
+		.bar {
+			@include u.text-shadow();
+			font-family: 'Star4000';
+			font-size: 22pt;
+			margin-left: 27px;
+			flex-grow: 1;
+		}
 	}
 
     .titles {
