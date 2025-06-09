@@ -17,6 +17,7 @@ class WeatherDisplay {
 		this.elemId = undefined;
 		this.data = undefined;
 		this.marineData = undefined;
+		this.aqiData = undefined;
 		this.loadingStatus = STATUS.loading;
 		this.name = name ?? elemId;
 		this.getDataCallbacks = [];
@@ -133,6 +134,25 @@ class WeatherDisplay {
 
 	getMarineData(weatherParameters) {
 		this.marineData = undefined;
+
+		// store weatherParameters locally in case we need them later
+		if (weatherParameters) this.weatherParameters = weatherParameters;
+
+		// set status
+		if (this.isEnabled) {
+			this.setStatus(STATUS.loading);
+		} else {
+			this.setStatus(STATUS.disabled);
+			return false;
+		}
+
+		// recalculate navigation timing (in case it was modified in the constructor)
+		this.calcNavTiming();
+		return true;
+	}
+
+	getAqiData(weatherParameters) {
+		this.aqiData = undefined;
 
 		// store weatherParameters locally in case we need them later
 		if (weatherParameters) this.weatherParameters = weatherParameters;

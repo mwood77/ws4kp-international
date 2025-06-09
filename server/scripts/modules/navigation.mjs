@@ -148,14 +148,14 @@ const getMarineForecast = async (latLon, haveDataCallback) => {
 };
 
 const getAirQualityForecast = async (latLon, haveDataCallback) => {
-	const marinePoint = await getAirQualityPoint(latLon.lat, latLon.lon);
+	const airQualityPoint = await getAirQualityPoint(latLon.lat, latLon.lon);
 	const point = await getPoint(latLon.lat, latLon.lon);
 
-	if (typeof haveDataCallback === 'function') haveDataCallback(marinePoint);
+	if (typeof haveDataCallback === 'function') haveDataCallback(airQualityPoint);
 
 	displays.forEach((display) => {
 		if (display.name === 'Air Quality') {
-			display.getMarineData(point, marinePoint);
+			display.getAirQualityData(point, airQualityPoint);
 		}
 	});
 };
