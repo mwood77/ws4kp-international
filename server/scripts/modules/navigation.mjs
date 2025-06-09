@@ -409,10 +409,10 @@ const AssignLastUpdate = (date) => {
 	}
 };
 
-const latLonReceived = (data, haveDataCallback) => {
-	getWeather(data, haveDataCallback);
-	getMarineForecast(data, haveDataCallback);
-	getAirQualityForecast(data, haveDataCallback);
+const latLonReceived = async (data, haveDataCallback) => {
+	await getWeather(data, haveDataCallback);
+	await getMarineForecast(data, haveDataCallback);
+	await getAirQualityForecast(data, haveDataCallback);
 	AssignLastUpdate(null);
 };
 

@@ -11,81 +11,165 @@ class AirQualityForecast extends WeatherDisplay {
 		this.backgroundImage = loadImg('images/Background12.png');
 	}
 
-	// Override because the loading state isn't registering in getMarineData
-	// eslint-disable-next-line no-unused-vars
-	async getData(_weatherParameters) { this.setStatus(STATUS.loaded); }
+	// We're setting the core data object; largely used for location data
+	async getData(_weatherParameters) {
+		const superResult = await super.getData(_weatherParameters);
+		const weatherParameters = _weatherParameters ?? this.weatherParameters;
+
+		this.data = weatherParameters;
+
+		if (!superResult) return;
+		this.setStatus(STATUS.loaded);
+	}
 
 	async getAirQualityData(_weatherParameters, _aqiData) {
-		if (!super.getMarineData(_weatherParameters)) return;
+		if (!super.getAqiData(_weatherParameters)) return;
 		this.setStatus(STATUS.loading);
 
-		console.debug(`Weather Params: ${JSON.stringify(_weatherParameters)}`);
-		console.debug(`AQI Params: ${_aqiData}`);
+		// Check if API data is available, if not present error message
+		// Must also remove all templates from data screen ...
+		if (!_aqiData) {
+			const aqiContainer = this.elem.querySelector('.aqi-container');
+			aqiContainer.innerHTML = '';
 
-		this.aqiData = parseAirQualityData(_weatherParameters, _aqiData);
+			console.error('AqiForecast: No aqi data provided, unable to load aqi forecast.');
+			this.setStatus(STATUS.loaded);
+		} else {
+			const apiFailureContainer = this.elem.querySelector('.api-failure-container');
+			if (apiFailureContainer !== null) {
+				apiFailureContainer.innerHTML = '';
+				apiFailureContainer.remove();
+			}
+			this.aqiData = await parseAirQualityData(_weatherParameters, _aqiData, this.data);
+		}
 
 		this.calcNavTiming();
 		this.setStatus(STATUS.loaded);
 	}
 
 	async drawCanvas() {
+		// Fill template values
+		const fill = {
+			'aqi-location': `${this.aqiData?.location}`,
+			'aqi-index': this.aqiData.aqi,
+		};
+
+		// // return the filled template
+		const aqiForLocation = this.fillTemplate('aqi', fill);
+
+		// empty and update the container
+		const aqiContainer = this.elem.querySelector('.aqi-container');
+		aqiContainer.innerHTML = '';
+		aqiContainer.append(aqiForLocation);
+
+		// If this is set like the "hourly graph" this.image will never get updated
+		// this means that the bar graph will be corrupted.
+		this.image = this.elem.querySelector('.chart img');
+
+		// Canvas size
+		const availableWidth = 300;
+		const availableHeight = 36;
+		this.image.width = availableWidth;
+		this.image.height = availableHeight;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = availableWidth;
+		canvas.height = availableHeight;
+		const ctx = canvas.getContext('2d');
+		ctx.imageSmoothingEnabled = false;
+
+		drawAQIBar(ctx, this.aqiData.aqi);
+
+		// // Render
+		this.image.src = canvas.toDataURL();
+
 		super.drawCanvas();
-
-		console.log('Drawing Air Quality Forecast...');
-		console.log(this.aqiData);
-
-		// Set weekday name in header
-		// @todo - this isn't working
-		const bottomTitleEl = document.getElementById('dualTitle');
-		console.log(`Bottom Title Element: ${JSON.stringify(bottomTitleEl)}`);
-		if (bottomTitleEl && this.aqiData?.text) {
-			console.log(`Setting bottom title to: ${this.aqiData.text}`);
-			bottomTitleEl.textContent = this.aqiData.text;
-		}
-
-		// const waveConditionText = this.marineData.map((period) => calculateSeasCondition(period).toUpperCase());
-
-		// const time = new Date();
-		// const isAfterFivePM = time.getHours() >= 17;
-		// const advisoryText = isAfterFivePM ? getMarineAdvisory(this.marineData[1], this.data.windSpeed) : getMarineAdvisory(this.marineData[0], this.data.windSpeed);
-
-		// const advisoryFill = {
-		// 	message: advisoryText,
-		// };
-
-		// // create each day template
-		// const days = this.marineData.map((period, index) => {
-		// 	const fill = {
-		// 		'wave-icon': { type: 'img', src: getWaveIconFromCondition(waveConditionText[index]) },
-		// 		date: period.text,
-		// 		'wind-direction': period.windWaveDirection,
-		// 		'wind-speed': `${this.data.windSpeed[period.text.toLowerCase()].min}-${this.data.windSpeed[period.text.toLowerCase()].max}${ConversionHelpers.getMarineWindUnitText()}`,
-		// 		'wave-height': `${ConversionHelpers.convertWaveHeightUnits(period.waveHeight)}${ConversionHelpers.getWaveHeightUnitText()}`,
-		// 		'wave-condition': `${waveConditionText[index]}`,
-		// 	};
-
-		// 	// return the filled template
-		// 	return this.fillTemplate('day', fill);
-		// });
-
-		// // empty and update the container
-		// const dayContainer = this.elem.querySelector('.day-container');
-		// dayContainer.innerHTML = '';
-		// dayContainer.append(...days);
-
-		// const advisoryContainer = this.elem.querySelector('.advisory-container');
-		// advisoryContainer.classList.add('hidden-border');
-		// advisoryContainer.innerHTML = '';
-
-		// if (advisoryText !== '') {
-		// 	const preparedTemplate = this.fillTemplate('advisory', advisoryFill);
-		// 	advisoryContainer.append(preparedTemplate);
-		// 	advisoryContainer.classList.remove('hidden-border');
-		// }
-
 		this.finishDraw();
 	}
 }
+
+const getBarWidthFromAQI = (value) => {
+	const scale = [
+		{ aqi: 0, px: 0 },
+		{ aqi: 50, px: 60 },
+		{ aqi: 100, px: 120 },
+		{ aqi: 150, px: 180 },
+		{ aqi: 200, px: 220 },
+		{ aqi: 300, px: 300 },
+		{ aqi: 500, px: 300 },
+	];
+
+	// Clamp AQI value to 0–500
+	const aqi = Math.max(0, Math.min(value, 500));
+
+	// Find range
+	// eslint-disable-next-line no-plusplus
+	for (let i = 0; i < scale.length - 1; i++) {
+		const left = scale[i];
+		const right = scale[i + 1];
+		if (aqi >= left.aqi && aqi <= right.aqi) {
+			const ratio = (aqi - left.aqi) / (right.aqi - left.aqi);
+			return left.px + ratio * (right.px - left.px);
+		}
+	}
+
+	return 300; // fallback (shouldn’t hit)
+};
+
+const drawAQIBar = (ctx, value) => {
+	const height = 36;
+	const barHeight = 24;
+	const baseColor = '#9DAAA3';
+	const lightColor = '#DAD6D4';
+	const darkColor = '#040802';
+	const bevel = 4;
+	const barWidth = getBarWidthFromAQI(value);
+	const barY = (height - barHeight) / 2;
+
+	// Left bevel
+	ctx.fillStyle = lightColor;
+	ctx.beginPath();
+	ctx.moveTo(0, barY);
+	ctx.lineTo(bevel, barY + bevel);
+	ctx.lineTo(bevel, barY + barHeight - bevel);
+	ctx.lineTo(0, barY + barHeight);
+	ctx.closePath();
+	ctx.fill();
+
+	// Right bevel
+	ctx.fillStyle = darkColor;
+	ctx.beginPath();
+	ctx.moveTo(barWidth, barY);
+	ctx.lineTo(barWidth - bevel, barY + bevel);
+	ctx.lineTo(barWidth - bevel, barY + barHeight - bevel);
+	ctx.lineTo(barWidth, barY + barHeight);
+	ctx.closePath();
+	ctx.fill();
+
+	// Top bevel
+	ctx.fillStyle = lightColor;
+	ctx.beginPath();
+	ctx.moveTo(bevel, barY + bevel);
+	ctx.lineTo(barWidth - bevel, barY + bevel);
+	ctx.lineTo(barWidth, barY);
+	ctx.lineTo(0, barY);
+	ctx.closePath();
+	ctx.fill();
+
+	// Bottom bevel
+	ctx.fillStyle = darkColor;
+	ctx.beginPath();
+	ctx.moveTo(0, barY + barHeight);
+	ctx.lineTo(barWidth, barY + barHeight);
+	ctx.lineTo(barWidth - bevel, barY + barHeight - bevel);
+	ctx.lineTo(bevel, barY + barHeight - bevel);
+	ctx.closePath();
+	ctx.fill();
+
+	// Center fill
+	ctx.fillStyle = baseColor;
+	ctx.fillRect(bevel, barY + bevel, barWidth - bevel * 2, barHeight - bevel * 2);
+};
 
 const aggregateHourlyData = (hourlyDataArray, startingPosition, endingPosition) => {
 	if (!hourlyDataArray || hourlyDataArray.length === 0) {
@@ -101,12 +185,15 @@ const aggregateHourlyData = (hourlyDataArray, startingPosition, endingPosition) 
 	return average;
 };
 
-const parseAirQualityData = (weatherParameters, aqiData) => {
+const parseAirQualityData = (_weatherParameters, aqiData, coreData) => {
 	const todayDate = aqiData.hourly.time?.[0];
-	const todayName = todayDate ? new Date(todayDate).toLocaleDateString(undefined, { weekday: 'long', timeZone: weatherParameters.timezone }) : 'Today';
+	const todayName = todayDate ? new Date(todayDate).toLocaleDateString(undefined, { weekday: 'long', timeZone: _weatherParameters.timezone }) : 'Today';
 
 	const today = {
 		text: todayName,
+		country: coreData.country,
+		state: coreData.state,
+		location: coreData.city,
 		aqi: Math.floor(aggregateHourlyData(aqiData.hourly.pm2_5, 0, 24)),
 	};
 

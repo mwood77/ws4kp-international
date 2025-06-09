@@ -24,13 +24,6 @@
 		}
 	}
 
-    .message {
-        font-size: 24pt;
-        text-align: center;
-        margin-top: -4px;
-        @include u.text-shadow();
-    }
-
 	.api-failure-container {
 		display: flex;
 		width: 100%;
@@ -48,44 +41,49 @@
 		}
 	}
 
-    .title-and-day-container {
-        display: flex;
+    .aqi-container {
 		margin-top: 12px;
-    }
+		width: 640px;
 
-	.title-container {
-		width: 248px;
-	}
-
-    .title {
-        @include u.text-shadow();
-        font-family: 'Star4000';
-        font-size: 22pt;
-        margin-left: 27px;
-        flex-grow: 1;
-    }
-
-	.value-container {
-		margin-top: 1rem;
-
-		.title {
-			text-align: right;
-			width: 48px;
-			margin-left: 0;
+		.aqi {
+			display: flex
 		}
 
-		.bar {
+		.title-container {
+			width: 248px;
+		}
+
+		.title {
 			@include u.text-shadow();
 			font-family: 'Star4000';
 			font-size: 22pt;
 			margin-left: 27px;
-			flex-grow: 1;
+		}
+
+		.bar-container {
+			margin-top: 1rem;
+			max-width: 320px;
+
+			.chart {
+				top: 0px;
+				margin-left: 27px;
+
+				img {
+					width: 300px;
+					height: 36px;
+				}
+			}
+		}
+
+		.value-container {
+			margin-top: 1rem;
+			max-width: 60px;
+
+			.title {
+				text-align: right;
+				width: 48px;
+				margin-left: 0;
+			}
 		}
 	}
-
-    .titles {
-  		@include u.text-shadow();
-		font-family: 'Star4000';
-		font-size: 24pt;
-    }
 }
