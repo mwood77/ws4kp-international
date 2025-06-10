@@ -63,6 +63,10 @@ This will update the artifacts in the `/docs` folder. Simply commit them as part
 #### Docker Image
 This is handled automatically as part of CI/CD, when your code is merged to `main`.
 
+## Updates in 10.0.0
+
+- Air Quality Index Forecast powered by [Open Meteo's Air Quality API](https://open-meteo.com/en/docs/air-quality-api)
+
 ## Updates in 9.0.0
 
 >[!IMPORTANT]

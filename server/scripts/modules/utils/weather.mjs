@@ -45,6 +45,16 @@ function isValidMarineResponse(data) {
 	});
 }
 
+const getAirQualityPoint = async (lat, lon) => {
+	try {
+		return await json(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm2_5&forecast_days=1&domains=cams_global`);
+	} catch (error) {
+		console.log(`Unable to get Air Quality for point ${lat}, ${lon}`);
+		console.error(error);
+		return false;
+	}
+};
+
 const getMarinePoint = async (lat, lon) => {
 	const availableModels = getMarineDataModels();
 
@@ -239,6 +249,7 @@ export {
 	// eslint-disable-next-line import/prefer-default-export
 	getPoint,
 	getMarinePoint,
+	getAirQualityPoint,
 	getGeocoding,
 	aggregateWeatherForecastData,
 	getConditionText,

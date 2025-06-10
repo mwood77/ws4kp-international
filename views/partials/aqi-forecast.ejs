@@ -1,0 +1,34 @@
+<%- include('header.ejs', { titleDual:{ top: 'Air Quality' , bottom: 'Today' }, noaaLogo: false, hasTime: true }) %>
+<div class="main has-scroll aqi-forecast">
+
+    <div class="ratings-container">
+        <div class="rating">HAZARDOUS</div>
+        <div class="rating">VERY UNHEALTHY</div>
+        <div class="rating">UNHEALTHY</div>
+        <div class="rating">GOOD</div>
+    </div>
+
+    <div class="api-failure-container">
+        <div class="message">AQI FAILURE</div>
+    </div>
+
+    <div class="aqi-container">
+        <div class="aqi template">
+            <div class="title-container">
+                <div class="aqi-location title"></div>
+            </div>
+    
+            <div class="value-container">
+                <div class="aqi-index title"></div>
+            </div>
+    
+            <div class="bar-container">
+                <div class="chart">
+                    <img id="chart-area"></img>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<%- include('scroll.ejs') %>

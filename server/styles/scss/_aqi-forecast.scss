@@ -1,0 +1,89 @@
+@use 'shared/_colors'as c;
+@use 'shared/_utils'as u;
+
+#aqi-forecast-html.weather-display {
+	background-image: url('../images/Background12.png');
+}
+
+
+.weather-display .aqi-forecast {
+
+	.ratings-container {
+		padding-left: 49%;
+		padding-top: 8px;
+
+		.rating {
+			display: inline-block;
+			width: 100%;
+			text-align: center;
+			font-size: 14pt;
+			margin-bottom: -1px;
+			border-radius: 50%;
+			text-align: left;
+			@include u.text-shadow();
+		}
+	}
+
+	.api-failure-container {
+		display: flex;
+		width: 100%;
+		justify-content: center;
+
+		.message {
+			font-size: 24pt;
+			text-align: center;
+			margin-top: 16px;
+			@include u.text-shadow();
+			padding: 1rem;
+			border: 4px solid rgb(213, 53, 53);
+			box-sizing: border-box;
+			background-color: rgba(213, 53, 53, 0.8);
+		}
+	}
+
+    .aqi-container {
+		margin-top: 12px;
+		width: 640px;
+
+		.aqi {
+			display: flex
+		}
+
+		.title-container {
+			width: 248px;
+		}
+
+		.title {
+			@include u.text-shadow();
+			font-family: 'Star4000';
+			font-size: 22pt;
+			margin-left: 27px;
+		}
+
+		.bar-container {
+			margin-top: 1rem;
+			max-width: 320px;
+
+			.chart {
+				top: 0px;
+				margin-left: 27px;
+
+				img {
+					width: 300px;
+					height: 36px;
+				}
+			}
+		}
+
+		.value-container {
+			margin-top: 1rem;
+			max-width: 60px;
+
+			.title {
+				text-align: right;
+				width: 48px;
+				margin-left: 0;
+			}
+		}
+	}
+}

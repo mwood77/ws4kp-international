@@ -3,7 +3,7 @@ import noSleep from './utils/nosleep.mjs';
 import STATUS from './status.mjs';
 import { wrap } from './utils/calc.mjs';
 import {
-	getPoint, getMarinePoint, getGeocoding, aggregateWeatherForecastData,
+	getPoint, getMarinePoint, getGeocoding, aggregateWeatherForecastData, getAirQualityPoint,
 } from './utils/weather.mjs';
 import settings from './settings.mjs';
 
@@ -143,6 +143,19 @@ const getMarineForecast = async (latLon, haveDataCallback) => {
 	displays.forEach((display) => {
 		if (display.name === 'Marine Forecast') {
 			display.getMarineData(point, marinePoint);
+		}
+	});
+};
+
+const getAirQualityForecast = async (latLon, haveDataCallback) => {
+	const airQualityPoint = await getAirQualityPoint(latLon.lat, latLon.lon);
+	const point = await getPoint(latLon.lat, latLon.lon);
+
+	if (typeof haveDataCallback === 'function') haveDataCallback(airQualityPoint);
+
+	displays.forEach((display) => {
+		if (display.name === 'Air Quality') {
+			display.getAirQualityData(point, airQualityPoint);
 		}
 	});
 };
@@ -396,9 +409,10 @@ const AssignLastUpdate = (date) => {
 	}
 };
 
-const latLonReceived = (data, haveDataCallback) => {
-	getWeather(data, haveDataCallback);
-	getMarineForecast(data, haveDataCallback);
+const latLonReceived = async (data, haveDataCallback) => {
+	await getWeather(data, haveDataCallback);
+	await getMarineForecast(data, haveDataCallback);
+	await getAirQualityForecast(data, haveDataCallback);
 	AssignLastUpdate(null);
 };
 
