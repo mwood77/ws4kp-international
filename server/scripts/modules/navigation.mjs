@@ -151,8 +151,6 @@ const getWeather = async (latLon, haveDataCallback) => {
 	} else {
 		weatherParameters.nearbyCities = nearybyCities;
 	}
-
-	console.log(weatherParameters.nearbyCities);
 };
 
 const getMarineForecast = async (latLon, haveDataCallback) => {

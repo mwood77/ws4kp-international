@@ -4,11 +4,13 @@ import STATUS from './status.mjs';
 import { loadImg } from './utils/image.mjs';
 import WeatherDisplay from './weatherdisplay.mjs';
 import { registerDisplay } from './navigation.mjs';
+import { getAirQualityPoint } from './utils/weather.mjs';
 
 class AirQualityForecast extends WeatherDisplay {
 	constructor(navId, elemId, defaultActive) {
 		super(navId, elemId, 'Air Quality', defaultActive);
 		this.backgroundImage = loadImg('images/Background12.png');
+		this.nearbyCities = [];
 	}
 
 	// We're setting the core data object; largely used for location data
@@ -25,6 +27,9 @@ class AirQualityForecast extends WeatherDisplay {
 	async getAirQualityData(_weatherParameters, _aqiData) {
 		if (!super.getAqiData(_weatherParameters)) return;
 		this.setStatus(STATUS.loading);
+
+		// @todo - there's a problem where if the user changes location, the (local to this screen's) nearbyCities array isn't flushed. Or the display isn't flushed correctly...
+		this.nearbyCities.length = 0;
 
 		// Check if API data is available, if not present error message
 		// Must also remove all templates from data screen ...
@@ -43,6 +48,34 @@ class AirQualityForecast extends WeatherDisplay {
 			this.aqiData = await parseAirQualityData(_weatherParameters, _aqiData, this.data);
 		}
 
+		const nearbyCities = JSON.parse(localStorage.getItem('nearbyCitiesFromLocality'));
+
+		if (nearbyCities && nearbyCities.length > 0) {
+			const citiesAqiData = await Promise.all(
+				nearbyCities.map(async (city) => {
+					const aqiData = await getAirQualityPoint(city.lat, city.lon);
+					return { ...city, aqiData };
+				}),
+			);
+
+			const formattedNearbyData = Array.from(
+				new Set(
+					citiesAqiData.map((cityAndData) => cityAndData.city),
+				),
+			).map((uniqueCity) => {
+				const cityAndData = citiesAqiData.find((c) => c.city === uniqueCity);
+				const coreData = {
+					country: this.data.country,
+					state: this.data.state,
+					city: cityAndData.city,
+				};
+				return parseAirQualityData(_weatherParameters, cityAndData.aqiData, coreData);
+			});
+
+			// we only need 2 cities
+			this.nearbyCities.push(...formattedNearbyData.slice(0, 2));
+		}
+
 		this.calcNavTiming();
 		this.setStatus(STATUS.loaded);
 	}
@@ -57,31 +90,56 @@ class AirQualityForecast extends WeatherDisplay {
 		// // return the filled template
 		const aqiForLocation = this.fillTemplate('aqi', fill);
 
+		// fill with nearby cities
+		const cities = this.nearbyCities.map((city) => {
+			const cityFill = {
+				'aqi-location': `${city?.location}`,
+				'aqi-index': city.aqi,
+			};
+
+			// return the filled template
+			return this.fillTemplate('aqi', cityFill);
+		});
+
 		// empty and update the container
 		const aqiContainer = this.elem.querySelector('.aqi-container');
 		aqiContainer.innerHTML = '';
 		aqiContainer.append(aqiForLocation);
+		aqiContainer.append(...cities);
 
-		// If this is set like the "hourly graph" this.image will never get updated
-		// this means that the bar graph will be corrupted.
-		this.image = this.elem.querySelector('.chart img');
-
-		// Canvas size
+		// Find all chart images (one for main location, others for nearby cities)
+		const chartImages = this.elem.querySelectorAll('.chart img');
 		const availableWidth = 300;
 		const availableHeight = 36;
-		this.image.width = availableWidth;
-		this.image.height = availableHeight;
 
-		const canvas = document.createElement('canvas');
-		canvas.width = availableWidth;
-		canvas.height = availableHeight;
-		const ctx = canvas.getContext('2d');
-		ctx.imageSmoothingEnabled = false;
+		// Draw main location AQI bar
+		if (chartImages[0]) {
+			const canvasMain = document.createElement('canvas');
+			canvasMain.width = availableWidth;
+			canvasMain.height = availableHeight;
+			const ctxMain = canvasMain.getContext('2d');
+			ctxMain.imageSmoothingEnabled = false;
+			drawAQIBar(ctxMain, this.aqiData.aqi);
+			chartImages[0].width = availableWidth;
+			chartImages[0].height = availableHeight;
+			chartImages[0].src = canvasMain.toDataURL();
+		}
 
-		drawAQIBar(ctx, this.aqiData.aqi);
-
-		// // Render
-		this.image.src = canvas.toDataURL();
+		// Draw AQI bars for nearby cities
+		this.nearbyCities.forEach((nCity, index) => {
+			const img = chartImages[index + 1];
+			if (img) {
+				const canvasCity = document.createElement('canvas');
+				canvasCity.width = availableWidth;
+				canvasCity.height = availableHeight;
+				const ctxCity = canvasCity.getContext('2d');
+				ctxCity.imageSmoothingEnabled = false;
+				drawAQIBar(ctxCity, nCity.aqi);
+				img.width = availableWidth;
+				img.height = availableHeight;
+				img.src = canvasCity.toDataURL();
+			}
+		});
 
 		super.drawCanvas();
 		this.finishDraw();
@@ -125,7 +183,6 @@ const drawAQIBar = (ctx, value) => {
 	const bevel = 4;
 	const barWidth = getBarWidthFromAQI(value);
 	const barY = (height - barHeight) / 2;
-
 	// Left bevel
 	ctx.fillStyle = lightColor;
 	ctx.beginPath();
