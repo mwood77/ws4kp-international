@@ -117,6 +117,7 @@ const init = () => {
 		localStorage.removeItem('latLonQuery');
 		localStorage.removeItem('latLon');
 		localStorage.removeItem('latLonFromGPS');
+		localStorage.removeItem('nearbyCitiesFromLocality');
 
 		// clear html elements
 		document.querySelector('#spanCity').innerHTML = '';
