@@ -49,8 +49,9 @@ class AirQualityForecast extends WeatherDisplay {
 		}
 
 		const nearbyCities = JSON.parse(localStorage.getItem('nearbyCitiesFromLocality'));
+		const experimentalFeatures = document.documentElement.getAttribute('experimental-features');
 
-		if (nearbyCities && nearbyCities.length > 0) {
+		if (nearbyCities && nearbyCities.length > 0 && experimentalFeatures === 'true') {
 			const citiesAqiData = await Promise.all(
 				nearbyCities.map(async (city) => {
 					const aqiData = await getAirQualityPoint(city.lat, city.lon);

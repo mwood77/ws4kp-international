@@ -40,6 +40,7 @@ export default class NearbyCities {
 		});
 
 		// 1. Fetch city code from Wikipedia API
+		// eslint-disable-next-line consistent-return
 		return fetch(corsAnywhere + NearbyCities.internalConstructWikiCityCodeIdUrl(textlocation), { headers: defaultHeaders })
 			.then((res) => res.json())
 			.then((wikiData) => {
