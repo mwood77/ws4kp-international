@@ -59,18 +59,13 @@ class AirQualityForecast extends WeatherDisplay {
 				}),
 			);
 
-			const formattedNearbyData = Array.from(
-				new Set(
-					citiesAqiData.map((cityAndData) => cityAndData.city),
-				),
-			).map((uniqueCity) => {
-				const cityAndData = citiesAqiData.find((c) => c.city === uniqueCity);
+			const formattedNearbyData = citiesAqiData.map((uniqueCity) => {
 				const coreData = {
 					country: this.data.country,
 					state: this.data.state,
-					city: cityAndData.city,
+					city: uniqueCity.city,
 				};
-				return parseAirQualityData(_weatherParameters, cityAndData.aqiData, coreData);
+				return parseAirQualityData(_weatherParameters, uniqueCity.aqiData, coreData);
 			});
 
 			// we only need 2 cities

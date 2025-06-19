@@ -31,7 +31,7 @@ export default class NearbyCities {
 	}
 
 	static getNearbyCities(textlocation) {
-		const finalResult = [];
+		const finalResult = new Set();
 
 		const defaultHeaders = new Headers({
 			'User-Agent': 'ws4kp-international/1.0 (https://mwood77.github.io/ws4kp-international)',
@@ -69,6 +69,7 @@ export default class NearbyCities {
 								// Extract city labels from SPARQL response
 								const results = sparqlData.results && sparqlData.results.bindings;
 								if (results) {
+									const cityNameContainer = [];
 									results.forEach((item) => {
 										const cityObject = {};
 
@@ -85,11 +86,16 @@ export default class NearbyCities {
 											cityObject.population = item.population.value;
 										}
 
-										finalResult.push(cityObject);
+										// Wikedata API can return duplicate results with different pop objects,
+										// and we don't care about different pop values. So we discard duplicates
+										if (cityObject.city && !cityNameContainer.includes(cityObject.city)) {
+											cityNameContainer.push(cityObject.city);
+											finalResult.add(cityObject);
+										}
 									});
 								}
 
-								return finalResult;
+								return Array.from(finalResult);
 							});
 					});
 			});
