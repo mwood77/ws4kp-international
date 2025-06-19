@@ -1,4 +1,10 @@
-const corsAnywhere = 'https://cors-anywhere.herokuapp.com/';
+const corsAnywhereKnownSources = [
+	'http://34.57.114.91:8081/',
+	'http://167.99.65.233:3001/',
+	'http://134.209.161.78:9000/',
+	'http://50.62.181.64:8081/',
+	'http://213.136.80.56:8081/',
+];
 
 export default class NearbyCities {
 	static internalConstructWikiCityCodeIdUrl(location) {
@@ -41,6 +47,7 @@ export default class NearbyCities {
 
 		// 1. Fetch city code from Wikipedia API
 		// eslint-disable-next-line consistent-return
+		const corsAnywhere = corsAnywhereKnownSources[Math.floor(Math.random() * corsAnywhereKnownSources.length)];
 		return fetch(corsAnywhere + NearbyCities.internalConstructWikiCityCodeIdUrl(textlocation), { headers: defaultHeaders })
 			.then((res) => res.json())
 			.then((wikiData) => {

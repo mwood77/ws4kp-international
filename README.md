@@ -66,11 +66,11 @@ This is handled automatically as part of CI/CD, when your code is merged to `mai
 ## Updates in 11.0.0
 
 - Introduces "Experimental Features"
-	- By default, this is never enabled. This can only "persist" as _enabled_ (`&settings-experimentalFeatures-checkbox=true` to your URL) when using a permalink
+	- By default, this is never enabled. 
+	- This can only "persist" as _enabled_ (`&settings-experimentalFeatures-checkbox=true` to your URL) when using a permalink
+	- If this is enabled and data is present, cascading features will appear across different displays; ex, additional city AQI values on the Air Quality Index Forecast.
 	- Nearby cities lookup; this is used to get national city data (top populous cities) when enabled
 		- This is a very slow query, which can take 2-5 seconds to resolve on location change. This data is written to localStorage once retrieved, and removed when "Experimental Features" is disabled.
-			- If users enable this feature, they must use the in-application refresh button (center screen) to retrieve new data
-		- If this data is present, cascading features will appear across different displays; ex, additional city AQI values on the Air Quality Index Forecast.
 
 ## Updates in 10.0.0
 
