@@ -1,4 +1,5 @@
 import Setting from './utils/setting.mjs';
+import btnNavigateRefreshClick from '../index.mjs';
 
 document.addEventListener('DOMContentLoaded', () => {
 	init();
@@ -14,6 +15,7 @@ const settings = {
 	pressureUnits: { value: 1 },
 	hoursFormat: { value: 2 },
 	speed: { value: 1.0 },
+	experimentalFeatures: { value: false },
 	hideWebamp: { value: false },
 };
 
@@ -62,6 +64,14 @@ const init = () => {
 		[1.25, 'Slow'],
 		[1.5, 'Very Slow'],
 	]);
+	settings.experimentalFeatures = new Setting(
+		'experimentalFeatures',
+		'Experimental Features <a href="https://github.com/mwood77/ws4kp-international?tab=readme-ov-file#updates-in-1100" target="_blank" rel="noopener noreferrer">(info)</a>',
+		'checkbox',
+		false,
+		toggleExperimentalFeatures,
+		true,
+	);
 	settings.hideWebamp = new Setting('hideWebamp', 'Hide Webamp (Winamp)', 'checkbox', false, hideWebampChange, true);
 	settings.hideScanLines = new Setting('hideScanLines', 'Enable Scan Lines', 'checkbox', false, hideScanLinesChange, true);
 
@@ -117,6 +127,14 @@ const hoursChangeFormat = (value) => {
 	if (value) {
 		document.documentElement.setAttribute('hours-format', value);
 	}
+};
+
+const toggleExperimentalFeatures = (value) => {
+	document.documentElement.setAttribute('experimental-features', value);
+
+	// @todo - this is a bit gnarly
+	if (!value) localStorage.removeItem('nearbyCitiesFromLocality');
+	btnNavigateRefreshClick();
 };
 
 const hideWebampChange = async (value) => {

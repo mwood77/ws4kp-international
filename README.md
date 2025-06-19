@@ -63,6 +63,15 @@ This will update the artifacts in the `/docs` folder. Simply commit them as part
 #### Docker Image
 This is handled automatically as part of CI/CD, when your code is merged to `main`.
 
+## Updates in 11.0.0
+
+- Introduces "Experimental Features"
+	- By default, this is never enabled. 
+	- This can only "persist" as _enabled_ (`&settings-experimentalFeatures-checkbox=true` to your URL) when using a permalink
+	- If this is enabled and data is present, cascading features will appear across different displays; ex, additional city AQI values on the Air Quality Index Forecast.
+	- Nearby cities lookup; this is used to get national city data (top populous cities) when enabled
+		- This is a very slow query, which can take 2-5 seconds to resolve on location change. This data is written to localStorage once retrieved, and removed when "Experimental Features" is disabled.
+
 ## Updates in 10.0.0
 
 - Air Quality Index Forecast powered by [Open Meteo's Air Quality API](https://open-meteo.com/en/docs/air-quality-api)
@@ -161,11 +170,10 @@ Kiosk mode can be activated by a checkbox on the page. Note that there is no way
 
 It's also possible to enter kiosk mode using a permalink. First generate a [Permalink](#sharing-a-permalink-bookmarking), then to the end of it add `&kiosk=true`. Opening this link will load all of the selected displays included in the Permalink, enter kiosk mode immediately upon loading and start playing the forecast.
 
-## Wish list
+## Wish list (Feature Requests)
 
-As time allows I will be working on the following enhancements.
-
-* Better error reporting when api.weather.gov is down (happens more often than you would think)
+If you think a feature is missing, please add a feature request here:
+- https://github.com/mwood77/ws4kp-international/issues
 
 ## Community Notes
 
@@ -173,12 +181,12 @@ Thanks to the WeatherStar community for providing these discussions to further e
 
 * [Stream as FFMPEG](https://github.com/netbymatt/ws4kp/issues/37#issuecomment-2008491948)
 
-## Customization
-A hook is provided as `/server/scripts/custom.js` to allow customizations to your own fork of this project, without accidentally pushing your customizations back upstream to the git repository. An sample file is provided at `/server/scripts/custom.sample.js` and should be renamed to `custom.js` activate it.
+<!-- ## Customization
+A hook is provided as `/server/scripts/custom.js` to allow customizations to your own fork of this project, without accidentally pushing your customizations back upstream to the git repository. An sample file is provided at `/server/scripts/custom.sample.js` and should be renamed to `custom.js` activate it. -->
 
 ## Issue reporting and feature requests
-
-Please do not report issues with api.weather.gov being down. It's a new service and not considered fully operational yet. Before reporting an issue or requesting a feature please consider that this is not intended to be a perfect recreation of the WeatherStar 4000, it's a best effort that fits within what's available from the API and within a web browser.
+Found a bug? Please report it here:
+- https://github.com/mwood77/ws4kp-international/issues
 
 ## Disclaimer
 

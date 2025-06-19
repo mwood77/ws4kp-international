@@ -6,6 +6,8 @@ import {
 	getPoint, getMarinePoint, getGeocoding, aggregateWeatherForecastData, getAirQualityPoint,
 } from './utils/weather.mjs';
 import settings from './settings.mjs';
+import NearbyCities from './utils/nearby-cities.mjs';
+import ExperimentalFeatures from './utils/experimental.mjs';
 
 import { parseQueryString } from './share.mjs';
 
@@ -132,6 +134,29 @@ const getWeather = async (latLon, haveDataCallback) => {
 
 	// call for new data on each display
 	displays.forEach((display) => display.getData(weatherParameters));
+
+	// We check for nearbyCities after calling the displays to load because it's essentially a blocking request.
+	// Generally it takes 2-3 seconds to get this data, and it looks like the application hangs while waiting.
+	const nearybyCities = JSON.parse(localStorage.getItem('nearbyCitiesFromLocality'));
+	let newNearbyCities;
+
+	// @todo - not stoked with this.
+	// experimentalFeatures does not persist (defaults to disabled & must enable every time)
+	if (ExperimentalFeatures.getExperimentalFlag()) {
+		console.warn('Experimental features enabled - you may encounter unintended behavior');
+		if (!nearybyCities) {
+			console.warn('getWeather:'
+				+ '\nnearybyCities is not set in localStorage. Origin could be a permalink.'
+				+ '\nAttempting to retrieve new cities.');
+
+			newNearbyCities = await NearbyCities.getNearbyCities(localityName.split(',')[0]);
+			localStorage.setItem('nearbyCitiesFromLocality', JSON.stringify(newNearbyCities));
+
+			weatherParameters.nearbyCities = newNearbyCities;
+		} else {
+			weatherParameters.nearbyCities = nearybyCities;
+		}
+	}
 };
 
 const getMarineForecast = async (latLon, haveDataCallback) => {

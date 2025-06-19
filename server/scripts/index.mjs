@@ -117,6 +117,7 @@ const init = () => {
 		localStorage.removeItem('latLonQuery');
 		localStorage.removeItem('latLon');
 		localStorage.removeItem('latLonFromGPS');
+		localStorage.removeItem('nearbyCitiesFromLocality');
 
 		// clear html elements
 		document.querySelector('#spanCity').innerHTML = '';
@@ -279,6 +280,7 @@ const swipeCallBack = (direction) => {
 	}
 };
 
+// Pushes user back to "Progress" display and re-loads data
 const btnNavigateRefreshClick = () => {
 	resetStatuses();
 	loadData();
@@ -427,3 +429,6 @@ const fullScreenResizeCheck = () => {
 	// store state of fullscreen element for next change detection
 	fullScreenResizeCheck.wasFull = !!document.fullscreenElement;
 };
+
+// Required for Experimental features
+export default btnNavigateRefreshClick;
