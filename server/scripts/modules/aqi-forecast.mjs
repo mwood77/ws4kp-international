@@ -5,6 +5,7 @@ import { loadImg } from './utils/image.mjs';
 import WeatherDisplay from './weatherdisplay.mjs';
 import { registerDisplay } from './navigation.mjs';
 import { getAirQualityPoint } from './utils/weather.mjs';
+import ExperimentalFeatures from './utils/experimental.mjs';
 
 class AirQualityForecast extends WeatherDisplay {
 	constructor(navId, elemId, defaultActive) {
@@ -49,9 +50,8 @@ class AirQualityForecast extends WeatherDisplay {
 		}
 
 		const nearbyCities = JSON.parse(localStorage.getItem('nearbyCitiesFromLocality'));
-		const experimentalFeatures = document.documentElement.getAttribute('experimental-features');
 
-		if (nearbyCities && nearbyCities.length > 0 && experimentalFeatures === 'true') {
+		if (nearbyCities && nearbyCities.length > 0 && ExperimentalFeatures.getExperimentalFlag()) {
 			const citiesAqiData = await Promise.all(
 				nearbyCities.map(async (city) => {
 					const aqiData = await getAirQualityPoint(city.lat, city.lon);
