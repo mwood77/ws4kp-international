@@ -101,7 +101,9 @@
 	}
 }
 
-.weather-display .main.radar {
+#map { height: 367px; z-index: 10;}
+
+.weather-display .main .radar {
 	overflow: hidden;
 	height: 367px;
 

@@ -15,6 +15,14 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="images/Logo192.png" />
   <script async defer src="https://buttons.github.io/buttons.js"></script>
+  
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
 
   <% if (production) { %>
   <link rel="stylesheet" type="text/css" href="resources/ws.min.css?_=<%=production%>" />
@@ -170,9 +178,19 @@
   <div class="info">
     <br />
     Resources & data provided by:<br />
-    - <a href="https://open-meteo.com/en/docs" target="_blank">Open Meteo</a> <br />
-    - <a href="https://archive.org/details/weatherscancompletecollection" target="_blank">Internet Archive</a><br />
-    - <a href="https://twcclassics.com/" target="_blank">TWC Classics</a><br />
+    <div style="display: flex; gap: 2em; flex-wrap: wrap;">
+      <div>
+        - <a href="https://open-meteo.com/en/docs" target="_blank">Open Meteo</a> <br />
+        - <a href="https://archive.org/details/weatherscancompletecollection" target="_blank">Internet Archive</a><br />
+        - <a href="https://twcclassics.com/" target="_blank">TWC Classics</a><br />
+        - <a href="https://leafletjs.com/" target="_blank">Leaflet</a><br />
+      </div>
+      <div>
+        - <a href="https://www.openstreetmap.org/" target="_blank">OpenStreetMap</a><br />
+        - <a href="https://www.esri.com/" target="_blank">ESRI</a><br />
+        - <a href="https://www.rainviewer.com/api.html" target="_blank">Rainviewer</a><br />
+      </div>
+    </div>
   </div>
 
   <div class='heading'>Selected displays</div>
