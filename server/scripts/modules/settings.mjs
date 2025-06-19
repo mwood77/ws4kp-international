@@ -1,4 +1,5 @@
 import Setting from './utils/setting.mjs';
+import btnNavigateRefreshClick from '../index.mjs';
 
 document.addEventListener('DOMContentLoaded', () => {
 	init();
@@ -133,6 +134,7 @@ const toggleExperimentalFeatures = (value) => {
 
 	// @todo - this is a bit gnarly
 	if (!value) localStorage.removeItem('nearbyCitiesFromLocality');
+	btnNavigateRefreshClick();
 };
 
 const hideWebampChange = async (value) => {
