@@ -204,9 +204,8 @@
   </div>
 
   <div id="app"></div>
-  <script src="https://unpkg.com/webamp"></script>
-  <script>
-      const app = document.getElementById("app")
+  <script type="module">
+      import Webamp from "https://unpkg.com/webamp@^2";
       const webamp = new Webamp({        
           availableSkins: [
             {
@@ -429,7 +428,11 @@
           },
         ],
       });
-      webamp.renderWhenReady(app);
+
+      // Expose it globally for setting.mjs
+      window.webamp = webamp;
+
+      webamp.renderWhenReady(document.getElementById("app"));
   </script>
 </body>
 

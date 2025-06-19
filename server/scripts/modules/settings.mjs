@@ -119,17 +119,24 @@ const hoursChangeFormat = (value) => {
 	}
 };
 
-const hideWebampChange = (value) => {
+const hideWebampChange = async (value) => {
 	if (value) document.documentElement.setAttribute('hide-webamp', value);
 
 	// Webamp is a global variable, defined in a <script>
 	// tag in index.ejs, so we can access it directly
+
+	// Wait until the global webamp instance is available
+	if (!window.webamp) {
+		console.warn('Webamp not initialized yet.');
+		return;
+	}
+
 	if (value === true) {
 		// eslint-disable-next-line no-undef
-		webamp.close();
+		await webamp.close();
 	} else {
 		// eslint-disable-next-line no-undef
-		webamp.reopen();
+		await webamp.reopen();
 	}
 };
 
