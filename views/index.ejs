@@ -204,11 +204,10 @@
   </div>
 
   <div id="app"></div>
-  <script src="https://unpkg.com/webamp"></script>
-  <script>
-      const app = document.getElementById("app")
-      const webamp = new Webamp({
-        availableSkins: [
+  <script type="module">
+      import Webamp from "https://unpkg.com/webamp@^2";
+      const webamp = new Webamp({        
+          availableSkins: [
             {
               url: "https://archive.org/cors/winampskin_Green-Dimension-V2/Green-Dimension-V2.wsz",
               name: "Green Dimension V2",
@@ -429,7 +428,11 @@
           },
         ],
       });
-      webamp.renderWhenReady(app);
+
+      // Expose it globally for setting.mjs
+      window.webamp = webamp;
+
+      webamp.renderWhenReady(document.getElementById("app"));
   </script>
 </body>
 
