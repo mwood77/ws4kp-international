@@ -128,6 +128,13 @@ const hoursChangeFormat = (value) => {
 	}
 };
 
+const toggleExperimentalFeatures = (value) => {
+	document.documentElement.setAttribute('experimental-features', value);
+
+	// @todo - this is a bit gnarly
+	if (!value) localStorage.removeItem('nearbyCitiesFromLocality');
+};
+
 const hideWebampChange = async (value) => {
 	if (value) document.documentElement.setAttribute('hide-webamp', value);
 
