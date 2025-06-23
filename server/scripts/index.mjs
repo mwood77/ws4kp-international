@@ -1,11 +1,10 @@
 import { json } from './modules/utils/fetch.mjs';
 import noSleep from './modules/utils/nosleep.mjs';
+import { round2 } from './modules/utils/units.mjs';
+import { parseQueryString } from './modules/share.mjs';
 import {
 	message as navMessage, hideAllCanvases, isPlaying, resize, resetStatuses, latLonReceived, stopAutoRefreshTimer, registerRefreshData,
 } from './modules/navigation.mjs';
-import { round2 } from './modules/utils/units.mjs';
-import { parseQueryString } from './modules/share.mjs';
-import settings from './modules/settings.mjs';
 
 document.addEventListener('DOMContentLoaded', () => {
 	init();
@@ -102,11 +101,6 @@ const init = () => {
 	if (fromGPS) {
 		btnGetGpsClick();
 	}
-
-	// if kiosk mode was set via the query string, also play immediately
-	settings.kiosk.value = parsedParameters['settings-kiosk-checkbox'] === 'true';
-	const play = parsedParameters['settings-kiosk-checkbox'] ?? localStorage.getItem('play');
-	if (play === null || play === 'true') postMessage('navButton', 'play');
 
 	document.querySelector('#btnClearQuery').addEventListener('click', () => {
 		// Stop display at current screen
