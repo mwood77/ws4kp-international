@@ -67,7 +67,7 @@ class MarineForecast extends WeatherDisplay {
 			advisoryContainer.innerHTML = '';
 			advisoryContainer.classList.add('hidden-border');
 
-			console.error('MarineForecast: No marine data provided, unable to load marine forecast.');
+			console.warn('MarineForecast: No marine data provided, unable to load marine forecast.');
 			this.setStatus(STATUS.loaded);
 		} else {
 			const apiFailureContainer = this.elem.querySelector('.api-failure-container');
@@ -75,10 +75,22 @@ class MarineForecast extends WeatherDisplay {
 				apiFailureContainer.innerHTML = '';
 				apiFailureContainer.remove();
 			}
-		}
 
-		this.marineData = parseMarineData(_marineData);
-		this.data = this.handleWindSpeed(_weatherParameters);
+			const titleContainer = this.elem.querySelector('.title-container');
+			// set inner html title template on location re-load.
+			// This typically happens when we get a marine API failure, but when
+			// it recovers, we are still missing the title information.
+			if (titleContainer.querySelectorAll('div').length === 0) {
+				const titleContainerReplacementHtml = `
+					<div class="title-container">
+						<div class="title">WINDS:</div>
+						<div class="title seas">SEAS:</div>
+					</div>`;
+				titleContainer.innerHTML = titleContainerReplacementHtml;
+			}
+			this.marineData = parseMarineData(_marineData);
+			this.data = this.handleWindSpeed(_weatherParameters);
+		}
 
 		this.calcNavTiming();
 		this.setStatus(STATUS.loaded);
@@ -87,6 +99,10 @@ class MarineForecast extends WeatherDisplay {
 	async drawCanvas() {
 		super.drawCanvas();
 
+		if (!this.marineData) {
+			this.finishDraw();
+			return;
+		}
 		const waveConditionText = this.marineData.map((period) => calculateSeasCondition(period).toUpperCase());
 
 		const time = new Date();
