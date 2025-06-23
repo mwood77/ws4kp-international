@@ -17,6 +17,8 @@ const settings = {
 	speed: { value: 1.0 },
 	experimentalFeatures: { value: false },
 	hideWebamp: { value: false },
+	kiosk: { value: false },
+	scanLines: { value: false },
 };
 
 const init = () => {
@@ -73,7 +75,7 @@ const init = () => {
 		true,
 	);
 	settings.hideWebamp = new Setting('hideWebamp', 'Hide Webamp (Winamp)', 'checkbox', false, hideWebampChange, true);
-	settings.hideScanLines = new Setting('hideScanLines', 'Enable Scan Lines', 'checkbox', false, hideScanLinesChange, true);
+	settings.scanLines = new Setting('scanLines', 'Enable Scan Lines', 'checkbox', false, scanLinesChange, true);
 
 	settings.wide = new Setting('wide', 'Widescreen', 'checkbox', false, wideScreenChange, true);
 	settings.kiosk = new Setting('kiosk', 'Kiosk', 'boolean', false, kioskChange, false);
@@ -158,7 +160,7 @@ const hideWebampChange = async (value) => {
 	}
 };
 
-const hideScanLinesChange = (value) => {
+const scanLinesChange = (value) => {
 	const container = document.querySelector('#divTwc');
 	if (value) {
 		container.classList.add('scan-lines');
