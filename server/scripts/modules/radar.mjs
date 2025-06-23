@@ -1,12 +1,8 @@
+/* eslint-disable no-underscore-dangle */
 // current weather conditions display
 import STATUS from './status.mjs';
-import { DateTime } from '../vendor/auto/luxon.mjs';
-import { loadImg } from './utils/image.mjs';
-import { text } from './utils/fetch.mjs';
-import { rewriteUrl } from './utils/cors.mjs';
 import WeatherDisplay from './weatherdisplay.mjs';
-import { registerDisplay, timeZone } from './navigation.mjs';
-import * as utils from './radar-utils.mjs';
+import { registerDisplay } from './navigation.mjs';
 
 class Radar extends WeatherDisplay {
 	constructor(navId, elemId) {
@@ -62,13 +58,19 @@ class Radar extends WeatherDisplay {
 		// if (!super.getData(_weatherParameters)) return;
 		const weatherParameters = _weatherParameters ?? this.weatherParameters;
 
-		// console.log(weatherParameters.latitude, weatherParameters.longitude);
+		const mapContainer = document.getElementById('map');
 
-		const map = L.map('map', leafletInitializationOptions).setView([weatherParameters.latitude, weatherParameters.longitude], leafletDefaultZoom);
-		L.tileLayer(tileSource, {
-			maxZoom: leafletDefaultZoom,
-			attribution: 'Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri',
-		}).addTo(map);
+		// Only initialize if Leaflet hasn't attached a map yet
+		if (!mapContainer._leaflet_id) {
+			window._leafletMap = window.L.map(mapContainer, leafletInitializationOptions).setView([weatherParameters.latitude, weatherParameters.longitude], leafletDefaultZoom);
+
+			window.L.tileLayer(tileSource, {
+				attribution: 'Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri',
+			}).addTo(window._leafletMap);
+		} else {
+			console.warn('Leaflet map already initialized.');
+			window._leafletMap.setView([weatherParameters.latitude, weatherParameters.longitude], leafletDefaultZoom);
+		}
 
 		// Then add a labels-only layer (must be transparent tiles with labels)
 		// L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -241,7 +243,7 @@ class Radar extends WeatherDisplay {
 	}
 
 	async drawCanvas() {
-		// super.drawCanvas();
+		super.drawCanvas();
 		// const time = this.times[this.screenIndex].toLocaleString(DateTime.TIME_SIMPLE);
 		// const timePadded = time.length >= 8 ? time : `&nbsp;${time}`;
 		// this.elem.querySelector('.header .right .time').innerHTML = timePadded;
@@ -253,7 +255,7 @@ class Radar extends WeatherDisplay {
 		// // scroll to image
 		// this.elem.querySelector('.scroll-area').style.top = `${-this.screenIndex * actualFrameHeight}px`;
 
-		// this.finishDraw();
+		this.finishDraw();
 	}
 }
 
