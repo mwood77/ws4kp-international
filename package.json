@@ -1,6 +1,6 @@
 {
 	"name": "ws4kp-international",
-	"version": "11.0.0",
+	"version": "11.0.3",
 	"description": "Welcome to the WeatherStar 4000+ project page!",
 	"main": "index.js",
 	"scripts": {
@@ -50,6 +50,6 @@
 	},
 	"dependencies": {
 		"ejs": "^3.1.5",
-		"express": "^4.17.1"
+		"express": "^4.20.0"
 	}
 }
