@@ -5,6 +5,29 @@ import WeatherDisplay from './weatherdisplay.mjs';
 import { registerDisplay } from './navigation.mjs';
 
 class Radar extends WeatherDisplay {
+	radarLayers = [];
+
+	maptFrames = [];
+
+	animationPosition = 0;
+
+	lastPastFramePosition = -1;
+
+	loadingTilesCount = 0;
+
+	loadedTilesCount = 0;
+
+	radarData = {};
+
+	static radarOptions = {
+		kind: 'radar',
+		tileSize: 256,
+		colorScheme: 2,
+		smoothData: 1,
+		snowColors: 1,
+		extension: 'webp',
+	};
+
 	constructor(navId, elemId) {
 		super(navId, elemId, 'Local Radar', false);
 
@@ -36,6 +59,139 @@ class Radar extends WeatherDisplay {
 			{ time: 1, si: 4 },
 			{ time: 12, si: 5 },
 		];
+	}
+
+	static isTilesLoading() {
+		return this.loadingTilesCount > this.loadedTilesCount;
+	}
+
+	/**
+     * Animation functions
+     * @param path - Path to the XYZ tile
+     */
+	static addLayer(frame) {
+		console.log('addLayer called');
+		console.log(this.radarLayers);
+		console.log(frame);
+		// if (!this.radarLayers[frame.path]) {
+		console.log(this.radarData);
+		const source = new window.L.TileLayer(`${this.radarData.host + frame.path}/${this.radarOptions.tileSize}/{z}/{x}/{y}/${this.radarOptions.colorScheme}/${this.radarOptions.smoothData}_${this.radarOptions.snowColors}.${this.radarOptions.extension}`, {
+		// window.L.addLayer(`${this.radarData.host + frame.path}/${this.radarOptions.tileSize}/{z}/{x}/{y}/${this.radarOptions.colorScheme}/${this.radarOptions.smoothData}_${this.radarOptions.snowColors}.${this.radarOptions.extension}`, {
+			tileSize: Radar.radarOptions.tileSize,
+			opacity: 100,
+			zIndex: frame.time,
+		});
+
+		source.addTo(window._leafletMap);
+
+		// console.log(source);
+
+		// // Track layer loading state to not display the overlay
+		// // before it will completelly loads
+		// source.on('loading', startLoadingTile);
+		// source.on('load', finishLoadingTile);
+		// source.on('remove', finishLoadingTile);
+
+		// this.radarLayers[frame.path] = source;
+
+		// console.log(this.radarLayers);
+		// // }
+		// window.L.tileLayer(this.radarLayers[frame.path]).addTo(window._leafletMap);
+		// if (!window.L.hasLayer(this.radarLayers[frame.path])) {
+		// 	window.L.addLayer(this.radarLayers[frame.path]);
+		// }
+	}
+
+	/**
+     * Display particular frame of animation for the @position
+     * If preloadOnly parameter is set to true, the frame layer only adds for the tiles preloading purpose
+     * @param position
+     * @param preloadOnly
+     * @param force - display layer immediatelly
+     */
+	static changeRadarPosition(position, preloadOnly, force) {
+		while (position >= this.mapFrames.length) {
+			// eslint-disable-next-line no-param-reassign
+			position -= this.mapFrames.length;
+		}
+		while (position < 0) {
+			// eslint-disable-next-line no-param-reassign
+			position += this.mapFrames.length;
+		}
+
+		const currentFrame = this.mapFrames[this.animationPosition];
+		const nextFrame = this.mapFrames[position];
+
+		Radar.addLayer(nextFrame);
+
+		// Quit if this call is for preloading only by design
+		// or some times still loading in background
+		// if (preloadOnly || (Radar.isTilesLoading() && !force)) {
+		// 	return;
+		// }
+
+		this.animationPosition = position;
+
+		// if (this.radarLayers[currentFrame.path]) {
+		// 	this.radarLayers[currentFrame.path].setOpacity(0);
+		// }
+		// console.log(this.radarLayers);
+		// this.radarLayers[nextFrame.path].setOpacity(100);
+
+		// const pastOrForecast = nextFrame.time > Date.now() / 1000 ? 'FORECAST' : 'PAST';
+
+		// document.getElementById('timestamp').innerHTML = `${pastOrForecast}: ${(new Date(nextFrame.time * 1000)).toString()}`;
+	}
+
+	/**
+     * Check avialability and show particular frame position from the timestamps list
+     */
+	static showFrame(nextPosition, force) {
+		const preloadingDirection = nextPosition - this.animationPosition > 0 ? 1 : -1;
+
+		Radar.changeRadarPosition(nextPosition, false, force);
+
+		// preload next next frame (typically, +1 frame)
+		// if don't do that, the animation will be blinking at the first loop
+		Radar.changeRadarPosition(nextPosition + preloadingDirection, true);
+	}
+
+	static async getRadarData() {
+		const radarSource = 'https://api.rainviewer.com/public/weather-maps.json';
+		return fetch(radarSource).then((res) => res.json());
+	}
+
+	static async initializeRadar(api, kind) {
+		// remove all already added tiled layers
+		const map = window._leafletMap;
+		if (map && Array.isArray(this.radarLayers)) {
+			this.radarLayers.forEach((layer) => {
+				map.removeLayer(layer);
+			});
+		}
+		this.mapFrames = [];
+		this.radarLayers = [];
+		this.animationPosition = 0;
+
+		if (!api) {
+			return;
+		}
+		if (kind === 'satellite' && api.satellite && api.satellite.infrared) {
+			this.mapFrames = api.satellite.infrared;
+
+			this.lastPastFramePosition = api.satellite.infrared.length - 1;
+			Radar.showFrame(this.lastPastFramePosition, true);
+		} else if (api.radar && api.radar.past) {
+			this.mapFrames = api.radar.past;
+			if (api.radar.nowcast) {
+				this.mapFrames = this.mapFrames.concat(api.radar.nowcast);
+			}
+
+			// show the last "past" frame
+			this.lastPastFramePosition = api.radar.past.length - 1;
+			this.radarData = api;
+			Radar.showFrame(this.lastPastFramePosition, true);
+		}
 	}
 
 	async getData(_weatherParameters) {
@@ -71,6 +227,12 @@ class Radar extends WeatherDisplay {
 			console.warn('Leaflet map already initialized.');
 			window._leafletMap.setView([weatherParameters.latitude, weatherParameters.longitude], leafletDefaultZoom);
 		}
+
+		this.radarData = await Radar.getRadarData();
+		// this.radarData = data;
+		console.log(this.radarData);
+
+		Radar.initializeRadar(this.radarData, 'radar');
 
 		// Then add a labels-only layer (must be transparent tiles with labels)
 		// L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
