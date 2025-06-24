@@ -10,7 +10,6 @@ async function simpleHash(message) {
 		.slice(0, 16);
 }
 
-// Create token
 async function createToken() {
 	const uuid = crypto.randomUUID();
 	const signature = await simpleHash(uuid);
