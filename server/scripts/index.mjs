@@ -426,3 +426,4 @@ const fullScreenResizeCheck = () => {
 
 // Required for Experimental features
 export default btnNavigateRefreshClick;
+export { loadData };

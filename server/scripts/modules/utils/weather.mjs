@@ -72,7 +72,7 @@ const getMarinePoint = async (lat, lon) => {
 		console.debug(`Checking marine data from model "${model}"...`);
 
 		if (result.status === 'fulfilled' && isValidMarineResponse(result.value)) {
-			console.info(`Marine data from model "${model}" is valid.`);
+			console.debug(`Marine data from model "${model}" is valid.`);
 			return result.value;
 		}
 	}
