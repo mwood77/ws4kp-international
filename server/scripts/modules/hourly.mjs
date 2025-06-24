@@ -7,6 +7,7 @@ import { directionToNSEW } from './utils/calc.mjs';
 import WeatherDisplay from './weatherdisplay.mjs';
 import { registerDisplay } from './navigation.mjs';
 import { getConditionText } from './utils/weather.mjs';
+import { loadData } from '../index.mjs';
 
 import ConversionHelpers from './utils/conversionHelpers.mjs';
 
@@ -28,11 +29,19 @@ class Hourly extends WeatherDisplay {
 	}
 
 	async getData(weatherParameters) {
+		const superResult = super.getData(weatherParameters);
+
+		if (weatherParameters == null) loadData();
 		this.data = await parseForecast(weatherParameters);
+
 		this.getDataCallback();
 
+		// stop here if we're disabled
+		if (!superResult) return;
+
 		this.setStatus(STATUS.loaded);
-		this.drawLongCanvas();
+
+		if (this.data) this.drawLongCanvas();
 	}
 
 	async drawLongCanvas() {
@@ -118,7 +127,7 @@ class Hourly extends WeatherDisplay {
 
 const getCurrentWeatherByHourFromTime = (data) => {
 	const currentTime = new Date();
-	const onlyDate = currentTime.toLocaleDateString('en-CA', { timeZone: data.timeZone }).split('T')[0]; // Extracts "YYYY-MM-DD"
+	const onlyDate = currentTime.toLocaleDateString('en-CA', { timeZone: data.timeZone }).split('T')[0] ?? currentTime.toLocaleDateString('en-CA', { timeZone: data.timeZone }); // Extracts "YYYY-MM-DD"
 
 	const availableTimes = data.forecast[onlyDate].hours;
 	const nextDate = DateTime.fromISO(onlyDate).plus({ days: 1 }).toISODate();
@@ -143,7 +152,8 @@ const getCurrentWeatherByHourFromTime = (data) => {
 };
 
 // extract specific values from forecast and format as an array
-const parseForecast = async (data) => {
+const parseForecast = (data) => {
+	if (!data) return;
 	const currentForecast = getCurrentWeatherByHourFromTime(data);
 
 	// Split today's date at the returned hourly index and iterate through 'todayAndTomorrow' from currentForecast to create hourly rows
@@ -160,6 +170,7 @@ const parseForecast = async (data) => {
 		isDay: hour.is_day,
 	}));
 
+	// eslint-disable-next-line consistent-return
 	return iterableHourlyData;
 };
 
