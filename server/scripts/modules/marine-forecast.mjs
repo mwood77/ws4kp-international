@@ -19,7 +19,16 @@ class MarineForecast extends WeatherDisplay {
 
 	// Override because the loading state isn't registering in getMarineData
 	// eslint-disable-next-line no-unused-vars
-	async getData(_weatherParameters) { this.setStatus(STATUS.loaded); }
+	async getData(_weatherParameters) {
+		// This is required for rendering the correct
+		// disable/enable state on the progress screen.
+		const superResult = super.getData(_weatherParameters);
+		this.getDataCallback();
+
+		// stop here if we're disabled
+		if (!superResult) return;
+		this.setStatus(STATUS.loaded);
+	}
 
 	handleWindSpeed(_weatherParameters) {
 		// aggregate wind speed data from conventional hourl weather data
