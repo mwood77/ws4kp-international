@@ -1,9 +1,7 @@
+import createToken from './hmac.mjs';
+
 const corsAnywhereKnownSources = [
-	'http://34.57.114.91:8081/',
-	'http://167.99.65.233:3001/',
-	'http://134.209.161.78:9000/',
-	'http://50.62.181.64:8081/',
-	'http://213.136.80.56:8081/',
+	'https://ws4kp.easypete.com/',
 ];
 
 export default class NearbyCities {
@@ -36,13 +34,14 @@ export default class NearbyCities {
 		return baseUrl + encodeURIComponent(query);
 	}
 
-	static getNearbyCities(textlocation) {
+	static async getNearbyCities(textlocation) {
 		const finalResult = new Set();
 
 		const defaultHeaders = new Headers({
 			'User-Agent': 'ws4kp-international/1.0 (https://mwood77.github.io/ws4kp-international)',
 			Origin: 'https://mwood77.github.io',
 			'Access-Control-Allow-Origin': '*',
+			'x-ws4kp': await createToken(),
 		});
 
 		// 1. Fetch city code from Wikipedia API
