@@ -81,8 +81,8 @@ class CurrentWeather extends WeatherDisplay {
 
 const getPressureArrow = (data) => {
 	let arrow = '';
-	if (data.PressureDirection === 'rising') arrow = '<img class="pressure-arrow" src=\'../../images/pressure-arrow.png\'></img>';
-	if (data.PressureDirection === 'falling') arrow = '<img class="pressure-arrow invert-pressure-arrow" src=\'../../images/pressure-arrow.png\'></img>';
+	if (data.PressureDirection === 'rising') arrow = '<img class="pressure-arrow" src=\'images/pressure-arrow.png\'></img>';
+	if (data.PressureDirection === 'falling') arrow = '<img class="pressure-arrow invert-pressure-arrow" src=\'images/pressure-arrow.png\'></img>';
 	return arrow;
 };
 
