@@ -439,6 +439,10 @@ const latLonReceived = async (data, haveDataCallback) => {
 	await getMarineForecast(data, haveDataCallback);
 	await getAirQualityForecast(data, haveDataCallback);
 	AssignLastUpdate(null);
+
+	// We can immediately start playing (auto play),
+	// as all data has been retrieved
+	setPlaying(true);
 };
 
 const startAutoRefreshTimer = () => {
