@@ -447,6 +447,15 @@
       // Expose it globally for setting.mjs
       window.webamp = webamp;
 
+      // Dispatch repeat and volume actions, as sensible defaults
+      webamp.store.dispatch({
+        type: "TOGGLE_REPEAT",
+      });
+      webamp.store.dispatch({
+        type: "SET_VOLUME",
+        volume: 100,
+      });
+
       webamp.renderWhenReady(document.getElementById("webamp-app"));
   </script>
 </body>
