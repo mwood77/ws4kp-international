@@ -22,7 +22,7 @@ class Radar extends WeatherDisplay {
 	static radarOptions = {
 		kind: 'radar',
 		tileSize: 256,
-		colorScheme: 2,
+		colorScheme: 4,
 		smoothData: 1,
 		snowColors: 1,
 		extension: 'webp',
@@ -65,9 +65,24 @@ class Radar extends WeatherDisplay {
 		return this.loadingTilesCount > this.loadedTilesCount;
 	}
 
-	static removeLayer() {
-		console.log(window._leafletMap);
-		// window._leafletMap.removeLayer(source)
+	static removeLayer(layer) {
+		if (!layer) {
+			console.warn('Tried to remove a layer, but layer is undefined or null');
+			return;
+		}
+
+		if (!window._leafletMap) {
+			console.warn('Leaflet map is not initialized');
+			return;
+		}
+
+		if (!window._leafletMap.hasLayer(layer)) {
+			console.warn('Layer not found on the map:', layer);
+			return;
+		}
+
+		console.log('Removing layer:', layer);
+		window._leafletMap.removeLayer(layer);
 	}
 
 	/**
@@ -91,8 +106,6 @@ class Radar extends WeatherDisplay {
 				this.radarLayers.push(source);
 				source.addTo(window._leafletMap);
 			}
-
-			// source.addTo(window._leafletMap);
 		}
 
 		// console.log(source);
@@ -121,7 +134,6 @@ class Radar extends WeatherDisplay {
      * @param force - display layer immediatelly
      */
 	static changeRadarPosition(position, preloadOnly, force) {
-		console.log('position' + position);
 		while (position >= this.mapFrames.length) {
 			// eslint-disable-next-line no-param-reassign
 			position -= this.mapFrames.length;
@@ -134,8 +146,22 @@ class Radar extends WeatherDisplay {
 		const currentFrame = this.mapFrames[this.animationPosition];
 		const nextFrame = this.mapFrames[position];
 
+		const layer = this.radarLayers.find((l) => l._url.includes(currentFrame?.path));
+		const nextLayer = this.radarLayers.find((l) => l._url.includes(nextFrame?.path));
+
+		console.log(this.mapFrames);
+
+		console.log(`currentFrame: ${JSON.stringify(currentFrame)}`);
+		// Radar.removeLayer(layer);
+
+		this.radarLayers.forEach((layerToZero) => {
+			if (layerToZero && layerToZero.options) {
+				layerToZero.options.opacity = 0;
+			}
+		});
+
+		console.log(`nextFrame: ${JSON.stringify(nextFrame)}`);
 		Radar.addLayer(nextFrame);
-		Radar.removeLayer();
 
 		// Quit if this call is for preloading only by design
 		// or some times still loading in background
@@ -145,18 +171,30 @@ class Radar extends WeatherDisplay {
 
 		this.animationPosition = position;
 
-		if (this.radarLayers[currentFrame.path]) {
-			console.log('this.radarLayers[currentFrame.path]');
-			console.log(this.radarLayers[currentFrame.path])
-			this.radarLayers[currentFrame.path].setOpacity(0);
-		}
 		console.log(this.radarLayers);
+
+		// if (layer) {
+		// 	console.log(layer);
+		// 	layer.setOpacity(0);
+		// 	console.log('set layer opacity to 0');
+		// 	console.log(layer);
+		// }
+		if (nextLayer) {
+			console.log(nextLayer);
+			nextLayer.setOpacity(100);
+		}
+
+		// if (this.radarLayers[currentFrame.path]) {
+		// 	console.log('this.radarLayers[currentFrame.path]');
+		// 	console.log(this.radarLayers[currentFrame.path]);
+		// 	this.radarLayers[currentFrame.path].setOpacity(0);
+		// }
 		// this.radarLayers[nextFrame.path].setOpacity(100);
 
-		const pastOrForecast = nextFrame.time > Date.now() / 1000 ? 'FORECAST' : 'PAST';
+		// const pastOrForecast = nextFrame.time > Date.now() / 1000 ? 'FORECAST' : 'PAST';
 
 		// document.getElementById('timestamp').innerHTML = `${pastOrForecast}: ${(new Date(nextFrame.time * 1000)).toString()}`;
-		console.log(`${pastOrForecast}: ${(new Date(nextFrame.time * 1000)).toString()}`);
+		// console.log(`${pastOrForecast}: ${(new Date(nextFrame.time * 1000)).toString()}`);
 	}
 
 	/**
@@ -165,12 +203,11 @@ class Radar extends WeatherDisplay {
 	static showFrame(nextPosition, force) {
 		const preloadingDirection = nextPosition - this.animationPosition > 0 ? 1 : -1;
 
-		console.log(Radar.changeRadarPosition(nextPosition, false, force));
 		Radar.changeRadarPosition(nextPosition, false, force);
 
 		// preload next next frame (typically, +1 frame)
 		// if don't do that, the animation will be blinking at the first loop
-		// Radar.changeRadarPosition(nextPosition + preloadingDirection, true);
+		Radar.changeRadarPosition(nextPosition + preloadingDirection, true);
 	}
 
 	static async getRadarData() {
@@ -197,7 +234,6 @@ class Radar extends WeatherDisplay {
 			this.mapFrames = api.satellite.infrared;
 
 			this.lastPastFramePosition = api.satellite.infrared.length - 1;
-			console.log('this.lastPastFramePosition' + this.lastPastFramePosition);
 			Radar.showFrame(this.lastPastFramePosition, true);
 		} else if (api.radar && api.radar.past) {
 			this.mapFrames = api.radar.past;
@@ -208,7 +244,6 @@ class Radar extends WeatherDisplay {
 			// show the last "past" frame
 			this.lastPastFramePosition = api.radar.past.length - 1;
 			this.radarData = api;
-			console.log('this.lastPastFramePosition radar' + this.lastPastFramePosition);
 			Radar.showFrame(this.lastPastFramePosition, true);
 		}
 	}
@@ -251,7 +286,7 @@ class Radar extends WeatherDisplay {
 		// this.radarData = data;
 		console.log(this.radarData);
 
-		Radar.initializeRadar(this.radarData, 'radar');
+		await Radar.initializeRadar(this.radarData, 'radar');
 
 		// Then add a labels-only layer (must be transparent tiles with labels)
 		// L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -437,14 +472,14 @@ class Radar extends WeatherDisplay {
 		// this.elem.querySelector('.scroll-area').style.top = `${-this.screenIndex * actualFrameHeight}px`;
 
 		this.finishDraw();
-		this.play();
+		// this.play();
 	}
 
 	play() {
 		Radar.showFrame(this.animationPosition + 1);
 
 		// Main animation driver. Run this function every 500 ms
-		this.animationTimer = setTimeout(this.play, 500);
+		this.animationTimer = setTimeout(this.play, 3000);
 	}
 }
 
