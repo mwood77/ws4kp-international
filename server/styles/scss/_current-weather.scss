@@ -47,6 +47,14 @@
 			}
 		}
 
+		.pressure-arrow { 
+			height: 21px;
+		}
+
+		.invert-pressure-arrow {
+			transform: scaley(-1);
+		}
+
 		.center {
 			text-align: center;
 		}

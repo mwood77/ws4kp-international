@@ -40,6 +40,7 @@ class CurrentWeather extends WeatherDisplay {
 		}
 
 		const iconImage = getWeatherIconFromIconLink(condition, this.data.timeZone);
+		const pressureArrow = getPressureArrow(this.data);
 
 		const fill = {
 			temp: this.data.Temperature + String.fromCharCode(176),
@@ -50,7 +51,7 @@ class CurrentWeather extends WeatherDisplay {
 			dewpoint: this.data.DewPoint + String.fromCharCode(176),
 			ceiling: (this.data.Ceiling === 0 ? 'Unlimited' : this.data.Ceiling + this.data.CeilingUnit),
 			visibility: this.data.Visibility + this.data.VisibilityUnit,
-			pressure: `${this.data.Pressure} ${this.data.PressureDirection}`,
+			pressure: `${this.data.Pressure} ${this.data.PressureUnit}${pressureArrow}`,
 			cloud: this.data.CloudCover ? `${this.data.CloudCover}%` : 'N/A',
 			uv: this.data.UV ? this.data.UV : 'N/A',
 			icon: { type: 'img', src: iconImage },
@@ -77,6 +78,13 @@ class CurrentWeather extends WeatherDisplay {
 		});
 	}
 }
+
+const getPressureArrow = (data) => {
+	let arrow = '';
+	if (data.PressureDirection === 'rising') arrow = '<img class="pressure-arrow" src=\'../../images/pressure-arrow.png\'></img>';
+	if (data.PressureDirection === 'falling') arrow = '<img class="pressure-arrow invert-pressure-arrow" src=\'../../images/pressure-arrow.png\'></img>';
+	return arrow;
+};
 
 const shortConditions = (_condition) => {
 	let condition = _condition;
@@ -109,6 +117,30 @@ const getCurrentWeatherByHourFromTime = (data) => {
 		return currDiff < prevDiff ? curr : prev;
 	});
 
+	// Find forecast from 3 hours ago
+	const threeHoursAgo = new Date(currentTime.getTime() - 3 * 60 * 60 * 1000);
+	const previousHour = availableTimes
+		.filter((entry) => new Date(entry.time) <= currentTime && new Date(entry.time) >= threeHoursAgo)
+		.reduce((prev, curr) => {
+			const prevDiff = Math.abs(new Date(prev.time) - threeHoursAgo);
+			const currDiff = Math.abs(new Date(curr.time) - threeHoursAgo);
+			return currDiff < prevDiff ? curr : prev;
+		}, availableTimes[0]);
+
+	const diff = closestTime.pressure_msl - previousHour.pressure_msl;
+
+	// raw value is always in hPa
+	if (diff > 0.5) {
+		closestTime.pressureTrend = 'rising';
+	} else if (diff < -0.5) {
+		closestTime.pressureTrend = 'falling';
+	} else {
+		closestTime.pressureTrend = 'steady';
+	}
+
+	// Append previous pressure point
+	closestTime.previous_pressure_msl = previousHour.pressure_msl;
+
 	// Append daily uv index max to the closest time
 	closestTime.uv_index_max = data.forecast[onlyDate].uv_index_max;
 
@@ -137,7 +169,8 @@ const parseData = (data) => {
 	data.WindGust = ConversionHelpers.convertWindUnits(currentForecast.wind_gusts_10m);
 	data.WindUnit = ConversionHelpers.getWindUnitText();
 	data.Humidity = currentForecast.relative_humidity_2m;
-	data.PressureDirection = ConversionHelpers.getPressureUnitText();
+	data.PressureUnit = ConversionHelpers.getPressureUnitText();
+	data.PressureDirection = currentForecast.pressureTrend;
 	data.TextConditions = currentForecast.weather_code;
 
 	return data;
