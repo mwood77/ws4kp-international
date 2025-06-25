@@ -130,6 +130,7 @@ class Setting {
 				if (storedValue !== undefined) {
 					switch (this.type) {
 						case 'boolean':
+						case 'checkbox':
 							return storedValue;
 						case 'select':
 							return storedValue;
