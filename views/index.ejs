@@ -146,8 +146,6 @@
   </div>
 
   <br />
-  <div id="webamp-app"></div>
-
   <!-- <div class="experimental-features">
     You've enabled experimental features, you may encounter bugs or weird behavior!
   </div> -->
@@ -155,10 +153,12 @@
   <div class="info">
     <a class="github-button" href="https://github.com/mwood77/ws4kp-international" data-color-scheme="no-preference: dark_dimmed; light: light; dark: dark;" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star mwood77/ws4kp-international on GitHub">Star</a>
     <a class="github-button" href="https://github.com/mwood77/ws4kp-international/fork" data-color-scheme="no-preference: dark_dimmed; light: light; dark: dark;" data-icon="octicon-repo-forked" data-size="large" data-show-count="true" aria-label="Fork mwood77/ws4kp-international on GitHub">Fork</a>
-    <a class="github-button" href="https://github.com/mwood77" data-color-scheme="no-preference: dark_dimmed; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Follow @mwood77 on GitHub">Follow @mwood77</a>
+    <!-- <a class="github-button" href="https://github.com/mwood77" data-color-scheme="no-preference: dark_dimmed; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Follow @mwood77 on GitHub">Follow @mwood77</a> -->
     <a class="github-button" href="https://github.com/mwood77/ws4kp-international/issues" data-color-scheme="no-preference: dark_dimmed; light: light; dark: dark;" data-icon="octicon-issue-opened" data-size="large" data-show-count="true" aria-label="Issue mwood77/ws4kp-international on GitHub">Issue</a>
     <a class="github-button" href="https://github.com/sponsors/mwood77" data-color-scheme="no-preference: dark_dimmed; light: light; dark: dark;" data-icon="octicon-heart" data-size="large" aria-label="Sponsor @mwood77 on GitHub">Sponsor</a>
   </div>
+
+  <div style="height: 50px; width:400px" id="webamp-app"></div>
 
   <div class="info">
     <br />
@@ -210,7 +210,18 @@
 
   <script type="module">
       import Webamp from "https://unpkg.com/webamp@^2";
-      const webamp = new Webamp({        
+      const webamp = new Webamp({    
+          windowLayout: {
+            main: {
+              position: { top: 20, left: 0 },
+              shadeMode: true,
+            },
+            playlist: {
+              position: { top: 30, left: 0 },
+              shadeMode: true,
+              closed: false,
+            },
+          }, 
           availableSkins: [
             {
               url: "https://archive.org/cors/winampskin_Green-Dimension-V2/Green-Dimension-V2.wsz",
