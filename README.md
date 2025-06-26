@@ -65,12 +65,12 @@ This is handled automatically as part of CI/CD, when your code is merged to `mai
 
 ## Updates in 11.0.0
 
-- Introduces "Experimental Features"
-	- By default, this is never enabled. 
-	- This can only "persist" as _enabled_ (`&settings-experimentalFeatures-checkbox=true` to your URL) when using a permalink
-	- If this is enabled and data is present, cascading features will appear across different displays; ex, additional city AQI values on the Air Quality Index Forecast.
-	- Nearby cities lookup; this is used to get national city data (top populous cities) when enabled
-		- This is a very slow query, which can take 2-5 seconds to resolve on location change. This data is written to localStorage once retrieved, and removed when "Experimental Features" is disabled.
+- Introduces ***Experimental Features***
+	- This can only persist" as _enabled_ when using a permalink (`&settings-experimentalFeatures-checkbox=true` to your URL). Unless present in the permalink, this is never enabled and does not persist between browser session.
+	- If this is enabled and data is present, cascading features ~~will~~ may appear across different displays; ex, additional city AQI values on the Air Quality Index Forecast.
+#### Under the hood
+- Nearby cities lookup; this is a new query, which gets national city data (top populous cities) when enabled.
+	- However this is a very slow query and somewhat unreliable (can take 2-5 seconds to resolve on location change). This data is written to localStorage once retrieved, and removed when "Experimental Features" is disabled.
 
 ## Updates in 10.0.0
 
