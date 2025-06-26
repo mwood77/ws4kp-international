@@ -66,7 +66,6 @@ This is handled automatically as part of CI/CD, when your code is merged to `mai
 ## Updates in 11.0.0
 
 - Introduces ***Experimental Features***
-	- This can only persist" as _enabled_ when using a permalink (`&settings-experimentalFeatures-checkbox=true` to your URL). Unless present in the permalink, this is never enabled and does not persist between browser session.
 	- If this is enabled and data is present, cascading features ~~will~~ may appear across different displays; ex, additional city AQI values on the Air Quality Index Forecast.
 #### Under the hood
 - Nearby cities lookup; this is a new query, which gets national city data (top populous cities) when enabled.
