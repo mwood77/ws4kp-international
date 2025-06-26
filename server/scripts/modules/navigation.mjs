@@ -141,8 +141,7 @@ const getWeather = async (latLon, haveDataCallback) => {
 	let newNearbyCities;
 
 	// @todo - not stoked with how experimentatlFeatures is handled
-	const parsedParameters = parseQueryString();
-	if (ExperimentalFeatures.getExperimentalFlag() || parsedParameters['settings-experimentalFeatures-checkbox']) {
+	if (ExperimentalFeatures.getExperimentalFlag()) {
 		console.warn('Experimental features enabled - you may encounter unintended behavior');
 		if (!nearybyCities) {
 			console.warn('getWeather:'
