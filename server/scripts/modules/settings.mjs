@@ -71,7 +71,7 @@ const init = () => {
 		'Experimental Features <a href="https://github.com/mwood77/ws4kp-international?tab=readme-ov-file#updates-in-1100" target="_blank" rel="noopener noreferrer">(info)</a>',
 		'boolean',
 		false,
-		toggleExperimentalFeatures,
+		experimentalFeaturesChange,
 		false,
 	);
 	settings.hideWebamp = new Setting('hideWebamp', 'Hide Webamp (Winamp)', 'boolean', false, hideWebampChange, true);
@@ -131,7 +131,7 @@ const hoursChangeFormat = (value) => {
 	}
 };
 
-const toggleExperimentalFeatures = (value) => {
+const experimentalFeaturesChange = (value) => {
 	document.documentElement.setAttribute('experimental-features', value);
 
 	// @todo - this is a bit gnarly
