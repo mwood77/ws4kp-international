@@ -72,7 +72,7 @@ const init = () => {
 		'boolean',
 		false,
 		experimentalFeaturesChange,
-		false,
+		true,
 	);
 	settings.hideWebamp = new Setting('hideWebamp', 'Hide Webamp (Winamp)', 'boolean', false, hideWebampChange, true);
 	settings.scanLines = new Setting('scanLines', 'Enable Scan Lines', 'boolean', false, scanLinesChange, true);
