@@ -140,8 +140,7 @@ const getWeather = async (latLon, haveDataCallback) => {
 	const nearybyCities = JSON.parse(localStorage.getItem('nearbyCitiesFromLocality'));
 	let newNearbyCities;
 
-	// @todo - not stoked with this.
-	// experimentalFeatures does not persist (defaults to disabled & must enable every time)
+	// @todo - not stoked with how experimentatlFeatures is handled
 	if (ExperimentalFeatures.getExperimentalFlag()) {
 		console.warn('Experimental features enabled - you may encounter unintended behavior');
 		if (!nearybyCities) {
