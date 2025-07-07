@@ -8,6 +8,8 @@ import { DateTime } from '../vendor/auto/luxon.mjs';
 import { getConditionText } from './utils/weather.mjs';
 import { getWeatherIconFromIconLink } from './icons.mjs';
 
+import ConversionHelpers from './utils/conversionHelpers.mjs';
+
 class Radar extends WeatherDisplay {
 	constructor(navId, elemId) {
 		super(navId, elemId, 'Local Radar', false);
@@ -86,10 +88,7 @@ class Radar extends WeatherDisplay {
 
 		let markerContent;
 
-		console.log(weatherData)
-
 		if (weatherData && weatherData.icon && weatherData.temperature !== undefined) {
-		// Create marker with weather icon and data
 			markerContent = this.createWeatherIconHTML(
 				weatherData.icon,
 				weatherData.temperature,
@@ -140,7 +139,7 @@ class Radar extends WeatherDisplay {
 
 		const markerContent = this.createWeatherIconHTML(
 			weatherData.icon,
-			weatherData.temperature,
+			ConversionHelpers.convertTemperatureUnits(weatherData.temperature),
 			weatherData.cityName || 'Current Location',
 		);
 
