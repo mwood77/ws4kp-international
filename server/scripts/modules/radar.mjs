@@ -1,3 +1,5 @@
+/* eslint-disable no-param-reassign */
+/* eslint-disable no-plusplus */
 /* eslint-disable no-underscore-dangle */
 // current weather conditions display
 import STATUS from './status.mjs';
@@ -48,7 +50,7 @@ class Radar extends WeatherDisplay {
 		this.timing.totalScreens = 1; // Will be updated when data loads
 	}
 
-	createWeatherIconHTML(weatherCode, temperature, cityName) {
+	static createWeatherIconHTML(weatherCode, temperature, cityName) {
 		const text = getConditionText(parseInt(weatherCode, 10));
 		const weatherIcon = getWeatherIconFromIconLink(text, 'America/New_York', true);
 
@@ -64,7 +66,7 @@ class Radar extends WeatherDisplay {
 			<div class="temperature-icon" style="display: flex; align-items: center; margin-top: -14px;">
 				<div style="
 					padding-right: 6px;
-					font-family: 'Star4000'; 
+					font-family: 'Star4000';
 					text-shadow: 3px 3px 0 #000, -1.5px -1.5px 0 #000, 0 -1.5px 0 #000, 1.5px -1.5px 0 #000, 1.5px 0 0 #000, 1.5px 1.5px 0 #000, 0 1.5px 0 #000, -1.5px 1.5px 0 #000, -1.5px 0 0 #000;
 					font-size: 36px;
 					color: #ff0;">${Math.round(temperature)}</div>
@@ -89,7 +91,7 @@ class Radar extends WeatherDisplay {
 		let markerContent;
 
 		if (weatherData && weatherData.icon && weatherData.temperature !== undefined) {
-			markerContent = this.createWeatherIconHTML(
+			markerContent = Radar.createWeatherIconHTML(
 				weatherData.icon,
 				weatherData.temperature,
 				cityName,
@@ -137,7 +139,7 @@ class Radar extends WeatherDisplay {
 	updateLocationMarker(weatherData) {
 		if (!this.locationMarker || !weatherData) return;
 
-		const markerContent = this.createWeatherIconHTML(
+		const markerContent = Radar.createWeatherIconHTML(
 			weatherData.icon,
 			ConversionHelpers.convertTemperatureUnits(weatherData.temperature),
 			weatherData.cityName || 'Current Location',
@@ -158,7 +160,7 @@ class Radar extends WeatherDisplay {
 		return this.loadingTilesCount > this.loadedTilesCount;
 	}
 
-	removeLayer(layer) {
+	static removeLayer(layer) {
 		if (!layer) {
 			console.warn('Tried to remove a layer, but layer is undefined or null');
 			return;
@@ -291,7 +293,7 @@ class Radar extends WeatherDisplay {
 		this.changeRadarPosition(preloadPosition, true);
 	}
 
-	async getRadarData() {
+	static async getRadarData() {
 		const radarSource = 'https://api.rainviewer.com/public/weather-maps.json';
 		try {
 			const response = await fetch(radarSource);
@@ -385,7 +387,7 @@ class Radar extends WeatherDisplay {
 			}
 
 			// Get radar data
-			this.radarData = await this.getRadarData();
+			this.radarData = await Radar.getRadarData();
 			await this.initializeRadar(this.radarData, 'radar');
 
 			const todayKey = DateTime.now().toFormat('yyyy-MM-dd');
