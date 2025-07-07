@@ -53,7 +53,21 @@ const drawScreen = async () => {
 // the "screens" are stored in an array for easy addition and removal
 const screens = [
 	// station name
-	(data) => `Conditions at ${data.city}`,
+	(data) => {
+		let sanitizedText = 'Conditions at ';
+		// Typically an airport with "International" at the second position
+		if (data.city.split(' ').length > 2 && data.city.split(' ')[1].toLowerCase() === 'international') {
+			sanitizedText += `${data.city.split(' ')[0]} Intl. ${data.city.split(' ')[2]} `;
+		// or a very long city name...this will
+		// truncate very long airports too, like
+		// "John F. Kennedy International Airport"
+		} else if (data.city.length > 20) {
+			sanitizedText += `${data.city.slice(0, 18)}...`;
+		} else {
+			sanitizedText += `${data.city} `;
+		}
+		return sanitizedText;
+	},
 
 	// temperature
 	(data) => {
@@ -65,7 +79,7 @@ const screens = [
 	(data) => `Humidity: ${data.Humidity}%   Dewpoint: ${data.DewPoint}${degree}${data.TemperatureUnit}`,
 
 	// barometric pressure
-	(data) => `Barometric Pressure: ${data.Pressure} ${data.PressureDirection}`,
+	(data) => `Barometric Pressure: ${data.Pressure} ${data.PressureUnit}`,
 
 	// wind
 	(data) => {
@@ -74,7 +88,7 @@ const screens = [
 			: 'Wind: Calm';
 
 		if (data.WindGust > 0) {
-			text += `  Gusts to ${data.WindGust}`;
+			text += `   Gusts to ${data.WindGust}`;
 		}
 		return text;
 	},
@@ -82,7 +96,7 @@ const screens = [
 	// visibility
 	(data) => {
 		const distance = `${data.Ceiling} ${data.CeilingUnit}`;
-		return `Visib: ${data.Visibility} ${data.VisibilityUnit}  Ceiling: ${data.Ceiling === 0 ? 'Unlimited' : distance}`;
+		return `Visib: ${data.Visibility} ${data.VisibilityUnit}   Ceiling: ${data.Ceiling === 0 ? 'Unlimited' : distance}`;
 	},
 ];
 
