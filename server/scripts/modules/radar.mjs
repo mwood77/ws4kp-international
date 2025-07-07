@@ -5,6 +5,9 @@ import WeatherDisplay from './weatherdisplay.mjs';
 import { registerDisplay } from './navigation.mjs';
 import { DateTime } from '../vendor/auto/luxon.mjs';
 
+import { getConditionText } from './utils/weather.mjs';
+import { getWeatherIconFromIconLink } from './icons.mjs';
+
 class Radar extends WeatherDisplay {
 	constructor(navId, elemId) {
 		super(navId, elemId, 'Local Radar', false);
@@ -20,6 +23,9 @@ class Radar extends WeatherDisplay {
 		this.loadingTilesCount = 0;
 		this.loadedTilesCount = 0;
 		this.radarData = {};
+
+		// City location marker
+		this.locationMarker = null;
 
 		// Radar options
 		this.radarOptions = {
@@ -38,6 +44,115 @@ class Radar extends WeatherDisplay {
 		this.timing.baseDelay = 500; // 500ms per frame
 		this.timing.delay = 1; // Each frame shows for 1 * baseDelay
 		this.timing.totalScreens = 1; // Will be updated when data loads
+	}
+
+	createWeatherIconHTML(weatherCode, temperature, cityName) {
+		const text = getConditionText(parseInt(weatherCode, 10));
+		const weatherIcon = getWeatherIconFromIconLink(text, 'America/New_York', true);
+
+		return `
+		<div style="margin:0; padding: 0; display: flex; flex-direction: column;">
+			<div class="row-1" style="display: flex; width: 100%;">
+				<div style="
+					text-shadow: 3px 3px 0 #000, -1.5px -1.5px 0 #000, 0 -1.5px 0 #000, 1.5px -1.5px 0 #000, 1.5px 0 0 #000, 1.5px 1.5px 0 #000, 0 1.5px 0 #000, -1.5px 1.5px 0 #000, -1.5px 0 0 #000;
+					font-family: 'Star4000';
+					font-size: 18pt;"
+				>${cityName}</div>
+			</div>
+			<div class="temperature-icon" style="display: flex; align-items: center; margin-top: -14px;">
+				<div style="
+					padding-right: 6px;
+					font-family: 'Star4000'; 
+					text-shadow: 3px 3px 0 #000, -1.5px -1.5px 0 #000, 0 -1.5px 0 #000, 1.5px -1.5px 0 #000, 1.5px 0 0 #000, 1.5px 1.5px 0 #000, 0 1.5px 0 #000, -1.5px 1.5px 0 #000, -1.5px 0 0 #000;
+					font-size: 36px;
+					color: #ff0;">${Math.round(temperature)}</div>
+				<img src="${weatherIcon}" alt="Weather" style="width: auto; height: 40px;" />
+			</div>
+		</div>
+	`;
+	}
+
+	// Method to add location marker
+	addLocationMarker(latitude, longitude, cityName, weatherData = null) {
+	// Remove existing marker if it exists
+		if (this.locationMarker && window._leafletMap) {
+			window._leafletMap.removeLayer(this.locationMarker);
+		}
+
+		if (!window._leafletMap) {
+			console.warn('Map not initialized');
+			return;
+		}
+
+		let markerContent;
+
+		console.log(weatherData)
+
+		if (weatherData && weatherData.icon && weatherData.temperature !== undefined) {
+		// Create marker with weather icon and data
+			markerContent = this.createWeatherIconHTML(
+				weatherData.icon,
+				weatherData.temperature,
+				cityName,
+			);
+		} else {
+		// Simple city name marker
+			markerContent = `
+			<div class="city-marker" style="
+				background: rgba(0, 0, 0, 0.8);
+				color: white;
+				border-radius: 6px;
+				padding: 6px 10px;
+				font-family: Arial, sans-serif;
+				font-size: 14px;
+				font-weight: bold;
+				text-align: center;
+				box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+				border: 2px solid white;
+				white-space: nowrap;
+			">
+				${cityName}
+			</div>
+		`;
+		}
+
+		// Create custom divIcon
+		const customIcon = window.L.divIcon({
+			html: markerContent,
+			className: 'custom-weather-marker',
+			iconSize: [120, 60],
+			iconAnchor: [60, 60], // Center the marker
+			popupAnchor: [0, -60],
+		});
+
+		// Create and add marker
+		this.locationMarker = window.L.marker([latitude, longitude], {
+			icon: customIcon,
+			zIndexOffset: 1000, // Ensure it appears above other layers
+		}).addTo(window._leafletMap);
+
+		return this.locationMarker;
+	}
+
+	// Method to update location marker with new weather data
+	updateLocationMarker(weatherData) {
+		if (!this.locationMarker || !weatherData) return;
+
+		const markerContent = this.createWeatherIconHTML(
+			weatherData.icon,
+			weatherData.temperature,
+			weatherData.cityName || 'Current Location',
+		);
+
+		const customIcon = window.L.divIcon({
+			html: markerContent,
+			className: 'custom-weather-marker',
+			iconSize: [120, 60],
+			iconAnchor: [60, 60],
+			popupAnchor: [0, -60],
+		});
+
+		this.locationMarker.setIcon(customIcon);
 	}
 
 	isTilesLoading() {
@@ -273,6 +388,21 @@ class Radar extends WeatherDisplay {
 			// Get radar data
 			this.radarData = await this.getRadarData();
 			await this.initializeRadar(this.radarData, 'radar');
+
+			const todayKey = DateTime.now().toFormat('yyyy-MM-dd');
+
+			const currentWeatherData = {
+				icon: weatherParameters.forecast[todayKey].weather_code,
+				temperature: weatherParameters.Temperature,
+				city: weatherParameters.city,
+			};
+
+			this.addLocationMarker(
+				weatherParameters.latitude,
+				weatherParameters.longitude,
+				weatherParameters.city,
+				currentWeatherData,
+			);
 
 			this.setStatus(STATUS.loaded);
 		} catch (error) {
