@@ -3,69 +3,48 @@
 import STATUS from './status.mjs';
 import WeatherDisplay from './weatherdisplay.mjs';
 import { registerDisplay } from './navigation.mjs';
+import { DateTime } from '../vendor/auto/luxon.mjs';
 
 class Radar extends WeatherDisplay {
-	radarLayers = [];
-
-	maptFrames = [];
-
-	animationPosition = 0;
-
-	lastPastFramePosition = -1;
-
-	loadingTilesCount = 0;
-
-	loadedTilesCount = 0;
-
-	radarData = {};
-
-	static radarOptions = {
-		kind: 'radar',
-		tileSize: 256,
-		colorScheme: 4,
-		smoothData: 1,
-		snowColors: 1,
-		extension: 'webp',
-	};
-
 	constructor(navId, elemId) {
 		super(navId, elemId, 'Local Radar', false);
 
 		this.okToDrawCurrentConditions = false;
 		this.okToDrawCurrentDateTime = false;
 
-		// set max images
+		// Initialize instance properties
+		this.radarLayers = [];
+		this.mapFrames = [];
+		this.animationPosition = 0;
+		this.lastPastFramePosition = -1;
+		this.loadingTilesCount = 0;
+		this.loadedTilesCount = 0;
+		this.radarData = {};
+
+		// Radar options
+		this.radarOptions = {
+			kind: 'radar',
+			tileSize: 256,
+			colorScheme: 4,
+			smoothData: 1,
+			snowColors: 1,
+			extension: 'webp',
+		};
+
+		// Set max images - this will be updated when we get actual data
 		this.dopplerRadarImageMax = 6;
-		// update timing
-		this.timing.baseDelay = 350;
-		this.timing.delay = [
-			{ time: 4, si: 5 },
-			{ time: 1, si: 0 },
-			{ time: 1, si: 1 },
-			{ time: 1, si: 2 },
-			{ time: 1, si: 3 },
-			{ time: 1, si: 4 },
-			{ time: 4, si: 5 },
-			{ time: 1, si: 0 },
-			{ time: 1, si: 1 },
-			{ time: 1, si: 2 },
-			{ time: 1, si: 3 },
-			{ time: 1, si: 4 },
-			{ time: 4, si: 5 },
-			{ time: 1, si: 0 },
-			{ time: 1, si: 1 },
-			{ time: 1, si: 2 },
-			{ time: 1, si: 3 },
-			{ time: 1, si: 4 },
-			{ time: 12, si: 5 },
-		];
+
+		// Update timing for animation
+		this.timing.baseDelay = 500; // 500ms per frame
+		this.timing.delay = 1; // Each frame shows for 1 * baseDelay
+		this.timing.totalScreens = 1; // Will be updated when data loads
 	}
 
-	static isTilesLoading() {
+	isTilesLoading() {
 		return this.loadingTilesCount > this.loadedTilesCount;
 	}
 
-	static removeLayer(layer) {
+	removeLayer(layer) {
 		if (!layer) {
 			console.warn('Tried to remove a layer, but layer is undefined or null');
 			return;
@@ -85,170 +64,182 @@ class Radar extends WeatherDisplay {
 		window._leafletMap.removeLayer(layer);
 	}
 
-	/**
-     * Animation functions
-     * @param path - Path to the XYZ tile
-     */
-	static addLayer(frame) {
-		if (frame) {
-			const source = new window.L.TileLayer(`${this.radarData.host + frame.path}/${this.radarOptions.tileSize}/{z}/{x}/{y}/${this.radarOptions.colorScheme}/${this.radarOptions.smoothData}_${this.radarOptions.snowColors}.${this.radarOptions.extension}`, {
-			// window.L.addLayer(`${this.radarData.host + frame.path}/${this.radarOptions.tileSize}/{z}/{x}/{y}/${this.radarOptions.colorScheme}/${this.radarOptions.smoothData}_${this.radarOptions.snowColors}.${this.radarOptions.extension}`, {
-				tileSize: Radar.radarOptions.tileSize,
-				opacity: 100,
-				zIndex: frame.time,
-			});
+	addLayer(frame) {
+		if (!frame) return null;
 
-			// Check if the layer with the same _url already exists
-			const exists = Object.values(window._leafletMap._layers).some(
-				(layer) => layer._url === source._url,
-			);
-			if (!exists) {
-				this.radarLayers.push(source);
-				source.addTo(window._leafletMap);
-			}
+		const tileUrl = `${this.radarData.host}${frame.path}/${this.radarOptions.tileSize}/{z}/{x}/{y}/${this.radarOptions.colorScheme}/${this.radarOptions.smoothData}_${this.radarOptions.snowColors}.${this.radarOptions.extension}`;
+
+		// Check if layer already exists
+		const existingLayer = this.radarLayers.find((layer) => layer._url && layer._url.includes(frame.path));
+
+		if (existingLayer) {
+			return existingLayer;
 		}
 
-		// console.log(source);
+		const source = new window.L.TileLayer(tileUrl, {
+			tileSize: this.radarOptions.tileSize,
+			opacity: 0, // Start invisible
+			zIndex: frame.time,
+		});
 
-		// // Track layer loading state to not display the overlay
-		// // before it will completelly loads
-		// source.on('loading', startLoadingTile);
-		// source.on('load', finishLoadingTile);
-		// source.on('remove', finishLoadingTile);
+		// Add event handlers for tile loading
+		source.on('loading', () => {
+			this.loadingTilesCount++;
+		});
 
-		// this.radarLayers[frame.path] = source;
+		source.on('load', () => {
+			this.loadedTilesCount++;
+		});
 
-		// console.log(this.radarLayers);
-		// // }
-		// window.L.tileLayer(this.radarLayers[frame.path]).addTo(window._leafletMap);
-		// if (!window.L.hasLayer(this.radarLayers[frame.path])) {
-		// 	window.L.addLayer(this.radarLayers[frame.path]);
-		// }
+		source.on('tileerror', (e) => {
+			console.warn('Tile failed to load:', e);
+			this.loadedTilesCount++; // Count failed tiles as "loaded" to prevent infinite waiting
+		});
+
+		this.radarLayers.push(source);
+		source.addTo(window._leafletMap);
+
+		return source;
 	}
 
-	/**
-     * Display particular frame of animation for the @position
-     * If preloadOnly parameter is set to true, the frame layer only adds for the tiles preloading purpose
-     * @param position
-     * @param preloadOnly
-     * @param force - display layer immediatelly
-     */
-	static changeRadarPosition(position, preloadOnly, force) {
+	changeRadarPosition(position, preloadOnly = false, force = false) {
+	// Wrap position to valid range
 		while (position >= this.mapFrames.length) {
-			// eslint-disable-next-line no-param-reassign
 			position -= this.mapFrames.length;
 		}
 		while (position < 0) {
-			// eslint-disable-next-line no-param-reassign
 			position += this.mapFrames.length;
 		}
 
-		const currentFrame = this.mapFrames[this.animationPosition];
+		if (this.mapFrames.length === 0) return;
+
 		const nextFrame = this.mapFrames[position];
 
-		const layer = this.radarLayers.find((l) => l._url.includes(currentFrame?.path));
-		const nextLayer = this.radarLayers.find((l) => l._url.includes(nextFrame?.path));
+		// Find or create the layer for the next frame
+		let nextLayer = this.radarLayers.find((layer) => layer._url && layer._url.includes(nextFrame.path));
 
-		console.log(this.mapFrames);
+		if (!nextLayer) {
+			nextLayer = this.addLayer(nextFrame);
+		}
 
-		console.log(`currentFrame: ${JSON.stringify(currentFrame)}`);
-		// Radar.removeLayer(layer);
+		// Quit if this call is for preloading only
+		if (preloadOnly) {
+			return;
+		}
 
-		this.radarLayers.forEach((layerToZero) => {
-			if (layerToZero && layerToZero.options) {
-				layerToZero.options.opacity = 0;
+		// Don't wait for tiles if forced, or if we're not currently loading
+		if (!force && this.isTilesLoading()) {
+		// Set a timeout to try again
+			setTimeout(() => {
+				this.changeRadarPosition(position, false, true);
+			}, 100);
+			return;
+		}
+
+		// Hide all layers first
+		this.radarLayers.forEach((layer) => {
+			if (layer && layer.setOpacity) {
+				layer.setOpacity(0);
 			}
 		});
 
-		console.log(`nextFrame: ${JSON.stringify(nextFrame)}`);
-		Radar.addLayer(nextFrame);
-
-		// Quit if this call is for preloading only by design
-		// or some times still loading in background
-		if (preloadOnly || (Radar.isTilesLoading() && !force)) {
-			return;
-		}
-
+		// Update position
 		this.animationPosition = position;
 
-		console.log(this.radarLayers);
-
-		// if (layer) {
-		// 	console.log(layer);
-		// 	layer.setOpacity(0);
-		// 	console.log('set layer opacity to 0');
-		// 	console.log(layer);
-		// }
-		if (nextLayer) {
-			console.log(nextLayer);
-			nextLayer.setOpacity(100);
+		// Show the current frame
+		if (nextLayer && nextLayer.setOpacity) {
+			nextLayer.setOpacity(0.8);
 		}
 
-		// if (this.radarLayers[currentFrame.path]) {
-		// 	console.log('this.radarLayers[currentFrame.path]');
-		// 	console.log(this.radarLayers[currentFrame.path]);
-		// 	this.radarLayers[currentFrame.path].setOpacity(0);
-		// }
-		// this.radarLayers[nextFrame.path].setOpacity(100);
-
-		// const pastOrForecast = nextFrame.time > Date.now() / 1000 ? 'FORECAST' : 'PAST';
-
-		// document.getElementById('timestamp').innerHTML = `${pastOrForecast}: ${(new Date(nextFrame.time * 1000)).toString()}`;
-		// console.log(`${pastOrForecast}: ${(new Date(nextFrame.time * 1000)).toString()}`);
+		// Update timestamp display
+		this.updateTimestamp(nextFrame);
 	}
 
-	/**
-     * Check avialability and show particular frame position from the timestamps list
-     */
-	static showFrame(nextPosition, force) {
+	updateTimestamp(frame) {
+		const timeElem = this.elem.querySelector('.time');
+		if (timeElem && frame.time) {
+			const frameTime = DateTime.fromSeconds(frame.time);
+			const pastOrForecast = frame.time > Date.now() / 1000 ? 'FORECAST' : 'PAST';
+			const timeString = frameTime.toLocaleString(DateTime.TIME_SIMPLE);
+			timeElem.innerHTML = `${pastOrForecast}: ${timeString}`;
+		}
+	}
+
+	showFrame(nextPosition, force = false) {
+		if (this.mapFrames.length === 0) return;
+
 		const preloadingDirection = nextPosition - this.animationPosition > 0 ? 1 : -1;
 
-		Radar.changeRadarPosition(nextPosition, false, force);
+		this.changeRadarPosition(nextPosition, false, force);
 
-		// preload next next frame (typically, +1 frame)
-		// if don't do that, the animation will be blinking at the first loop
-		Radar.changeRadarPosition(nextPosition + preloadingDirection, true);
+		// Preload next frame
+		const preloadPosition = (nextPosition + preloadingDirection + this.mapFrames.length) % this.mapFrames.length;
+		this.changeRadarPosition(preloadPosition, true);
 	}
 
-	static async getRadarData() {
+	async getRadarData() {
 		const radarSource = 'https://api.rainviewer.com/public/weather-maps.json';
-		return fetch(radarSource).then((res) => res.json());
+		try {
+			const response = await fetch(radarSource);
+			return await response.json();
+		} catch (error) {
+			console.error('Failed to fetch radar data:', error);
+			throw error;
+		}
 	}
 
-	static async initializeRadar(api, kind) {
-		// remove all already added tiled layers
-		const map = window._leafletMap;
-		if (map && Array.isArray(this.radarLayers)) {
+	async initializeRadar(api, kind = 'radar') {
+	// Clear existing layers
+		if (window._leafletMap && Array.isArray(this.radarLayers)) {
 			this.radarLayers.forEach((layer) => {
-				map.removeLayer(layer);
+				if (window._leafletMap.hasLayer(layer)) {
+					window._leafletMap.removeLayer(layer);
+				}
 			});
 		}
+
+		// Reset state
 		this.mapFrames = [];
 		this.radarLayers = [];
 		this.animationPosition = 0;
+		this.loadingTilesCount = 0;
+		this.loadedTilesCount = 0;
 
-		if (!api) {
-			return;
-		}
+		if (!api) return;
+
 		if (kind === 'satellite' && api.satellite && api.satellite.infrared) {
 			this.mapFrames = api.satellite.infrared;
-
 			this.lastPastFramePosition = api.satellite.infrared.length - 1;
-			Radar.showFrame(this.lastPastFramePosition, true);
 		} else if (api.radar && api.radar.past) {
-			this.mapFrames = api.radar.past;
+			this.mapFrames = [...api.radar.past];
 			if (api.radar.nowcast) {
 				this.mapFrames = this.mapFrames.concat(api.radar.nowcast);
 			}
-
-			// show the last "past" frame
 			this.lastPastFramePosition = api.radar.past.length - 1;
-			this.radarData = api;
-			Radar.showFrame(this.lastPastFramePosition, true);
+		}
+
+		// Update timing based on actual frame count
+		this.timing.totalScreens = this.mapFrames.length;
+		this.calcNavTiming();
+
+		// Show initial frame
+		if (this.mapFrames.length > 0) {
+			this.showFrame(this.lastPastFramePosition, true);
+		}
+	}
+
+	refreshCurrentFrame() {
+		if (this.mapFrames.length > 0) {
+			this.showFrame(this.animationPosition, true);
 		}
 	}
 
 	async getData(_weatherParameters) {
+		const superResult = super.getData(_weatherParameters);
+		if (!superResult) return;
+
+		const weatherParameters = _weatherParameters ?? this.weatherParameters;
+
 		const leafletDefaultZoom = 7;
 		const leafletInitializationOptions = {
 			zoomControl: false,
@@ -262,224 +253,50 @@ class Radar extends WeatherDisplay {
 			attributionControl: false,
 		};
 
-		// const tileSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}';
 		const tileSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}';
 
-		// if (!super.getData(_weatherParameters)) return;
-		const weatherParameters = _weatherParameters ?? this.weatherParameters;
+		try {
+			const mapContainer = document.getElementById('map');
 
-		const mapContainer = document.getElementById('map');
+			// Initialize Leaflet map if not already done
+			if (!mapContainer._leaflet_id) {
+				window._leafletMap = window.L.map(mapContainer, leafletInitializationOptions)
+					.setView([weatherParameters.latitude, weatherParameters.longitude], leafletDefaultZoom);
 
-		// Only initialize if Leaflet hasn't attached a map yet
-		if (!mapContainer._leaflet_id) {
-			window._leafletMap = window.L.map(mapContainer, leafletInitializationOptions).setView([weatherParameters.latitude, weatherParameters.longitude], leafletDefaultZoom);
+				window.L.tileLayer(tileSource, {
+					attribution: 'Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri',
+				}).addTo(window._leafletMap);
+			} else {
+				window._leafletMap.setView([weatherParameters.latitude, weatherParameters.longitude], leafletDefaultZoom);
+			}
 
-			window.L.tileLayer(tileSource, {
-				attribution: 'Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri',
-			}).addTo(window._leafletMap);
-		} else {
-			console.warn('Leaflet map already initialized.');
-			window._leafletMap.setView([weatherParameters.latitude, weatherParameters.longitude], leafletDefaultZoom);
+			// Get radar data
+			this.radarData = await this.getRadarData();
+			await this.initializeRadar(this.radarData, 'radar');
+
+			this.setStatus(STATUS.loaded);
+		} catch (error) {
+			console.error('Failed to initialize radar:', error);
+			this.setStatus(STATUS.failed);
 		}
+	}
 
-		this.radarData = await Radar.getRadarData();
-		// this.radarData = data;
-		console.log(this.radarData);
-
-		await Radar.initializeRadar(this.radarData, 'radar');
-
-		// Then add a labels-only layer (must be transparent tiles with labels)
-		// L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-		// 	opacity: 0.5, // Adjust for blend effect
-		// 	pane: 'overlayPane',
-		// }).addTo(map);
-
-		this.setStatus(STATUS.loaded);
-
-		// // ALASKA AND HAWAII AREN'T SUPPORTED!
-		// if (weatherParameters.state === 'AK' || weatherParameters.state === 'HI') {
-		// 	this.setStatus(STATUS.noData);
-		// 	return;
-		// }
-
-		// // get the base map
-		// let src = 'images/4000RadarMap2.jpg';
-		// if (weatherParameters.State === 'HI') src = 'images/HawaiiRadarMap2.png';
-		// this.baseMap = await loadImg(src);
-
-		// const baseUrl = 'https://mesonet.agron.iastate.edu/archive/data/';
-		// const baseUrlEnd = '/GIS/uscomp/';
-		// const baseUrls = [];
-		// let date = DateTime.utc().minus({ days: 1 }).startOf('day');
-
-		// // make urls for yesterday and today
-		// while (date <= DateTime.utc().startOf('day')) {
-		// 	baseUrls.push(`${baseUrl}${date.toFormat('yyyy/LL/dd')}${baseUrlEnd}`);
-		// 	date = date.plus({ days: 1 });
-		// }
-
-		// const lists = (await Promise.all(baseUrls.map(async (url) => {
-		// 	try {
-		// 	// get a list of available radars
-		// 		return text(url, { cors: true });
-		// 	} catch (error) {
-		// 		console.log('Unable to get list of radars');
-		// 		console.error(error);
-		// 		this.setStatus(STATUS.failed);
-		// 		return false;
-		// 	}
-		// }))).filter((d) => d);
-
-		// // convert to an array of gif urls
-		// const pngs = lists.flatMap((html, htmlIdx) => {
-		// 	const parser = new DOMParser();
-		// 	const xmlDoc = parser.parseFromString(html, 'text/html');
-		// 	// add the base url
-		// 	const base = xmlDoc.createElement('base');
-		// 	base.href = baseUrls[htmlIdx];
-		// 	xmlDoc.head.append(base);
-		// 	const anchors = xmlDoc.querySelectorAll('a');
-		// 	const urls = [];
-		// 	Array.from(anchors).forEach((elem) => {
-		// 		if (elem.innerHTML?.match(/n0r_\d{12}\.png/))	{
-		// 			urls.push(elem.href);
-		// 		}
-		// 	});
-		// 	return urls;
-		// });
-
-		// // get the last few images
-		// const timestampRegex = /_(\d{12})\.png/;
-		// const sortedPngs = pngs.sort((a, b) => (a.match(timestampRegex)[1] < b.match(timestampRegex)[1] ? -1 : 1));
-		// const urls = sortedPngs.slice(-(this.dopplerRadarImageMax));
-
-		// // calculate offsets and sizes
-		// let offsetX = 120;
-		// let offsetY = 69;
-		// const width = 2550;
-		// const height = 1600;
-		// offsetX *= 2;
-		// offsetY *= 2;
-		// const sourceXY = utils.getXYFromLatitudeLongitudeMap(weatherParameters, offsetX, offsetY);
-
-		// // create working context for manipulation
-		// const workingCanvas = document.createElement('canvas');
-		// workingCanvas.width = width;
-		// workingCanvas.height = height;
-		// const workingContext = workingCanvas.getContext('2d');
-		// workingContext.imageSmoothingEnabled = false;
-
-		// // calculate radar offsets
-		// const radarOffsetX = 120;
-		// const radarOffsetY = 70;
-		// const radarSourceXY = utils.getXYFromLatitudeLongitudeDoppler(weatherParameters, offsetX, offsetY);
-		// const radarSourceX = radarSourceXY.x / 2;
-		// const radarSourceY = radarSourceXY.y / 2;
-
-		// // Load the most recent doppler radar images.
-		// const radarInfo = await Promise.all(urls.map(async (url) => {
-		// 	// create destination context
-		// 	const canvas = document.createElement('canvas');
-		// 	canvas.width = 640;
-		// 	canvas.height = 367;
-		// 	const context = canvas.getContext('2d');
-		// 	context.imageSmoothingEnabled = false;
-
-		// 	// get the image
-		// 	const response = await fetch(rewriteUrl(url));
-
-		// 	// test response
-		// 	if (!response.ok) throw new Error(`Unable to fetch radar error ${response.status} ${response.statusText} from ${response.url}`);
-
-		// 	// get the blob
-		// 	const blob = await response.blob();
-
-		// 	// store the time
-		// 	const timeMatch = url.match(/_(\d{4})(\d\d)(\d\d)(\d\d)(\d\d)\./);
-		// 	let time;
-		// 	if (timeMatch) {
-		// 		const [, year, month, day, hour, minute] = timeMatch;
-		// 		time = DateTime.fromObject({
-		// 			year,
-		// 			month,
-		// 			day,
-		// 			hour,
-		// 			minute,
-		// 		}, {
-		// 			zone: 'UTC',
-		// 		}).setZone(timeZone());
-		// 	} else {
-		// 		time = DateTime.fromHTTP(response.headers.get('last-modified')).setZone(timeZone());
-		// 	}
-
-		// 	// assign to an html image element
-		// 	const imgBlob = await loadImg(blob);
-
-		// 	// draw the entire image
-		// 	workingContext.clearRect(0, 0, width, 1600);
-		// 	workingContext.drawImage(imgBlob, 0, 0, width, 1600);
-
-		// 	// get the base map
-		// 	context.drawImage(await this.baseMap, sourceXY.x, sourceXY.y, offsetX * 2, offsetY * 2, 0, 0, 640, 367);
-
-		// 	// crop the radar image
-		// 	const cropCanvas = document.createElement('canvas');
-		// 	cropCanvas.width = 640;
-		// 	cropCanvas.height = 367;
-		// 	const cropContext = cropCanvas.getContext('2d', { willReadFrequently: true });
-		// 	cropContext.imageSmoothingEnabled = false;
-		// 	cropContext.drawImage(workingCanvas, radarSourceX, radarSourceY, (radarOffsetX * 2), (radarOffsetY * 2.33), 0, 0, 640, 367);
-		// 	// clean the image
-		// 	utils.removeDopplerRadarImageNoise(cropContext);
-
-		// 	// merge the radar and map
-		// 	utils.mergeDopplerRadarImage(context, cropContext);
-
-		// 	const elem = this.fillTemplate('frame', { map: { type: 'img', src: canvas.toDataURL() } });
-
-		// 	return {
-		// 		canvas,
-		// 		time,
-		// 		elem,
-		// 	};
-		// }));
-
-		// // put the elements in the container
-		// const scrollArea = this.elem.querySelector('.scroll-area');
-		// scrollArea.innerHTML = '';
-		// scrollArea.append(...radarInfo.map((r) => r.elem));
-
-		// // set max length
-		// this.timing.totalScreens = radarInfo.length;
-		// // store the images
-		// this.data = radarInfo.map((radar) => radar.canvas);
-
-		// this.times = radarInfo.map((radar) => radar.time);
-		// this.setStatus(STATUS.loaded);
+	// Handle screen index changes from base class navigation
+	screenIndexChange(screenIndex) {
+		if (this.mapFrames.length > 0) {
+			this.showFrame(screenIndex);
+		}
 	}
 
 	async drawCanvas() {
 		super.drawCanvas();
-		// const time = this.times[this.screenIndex].toLocaleString(DateTime.TIME_SIMPLE);
-		// const timePadded = time.length >= 8 ? time : `&nbsp;${time}`;
-		// this.elem.querySelector('.header .right .time').innerHTML = timePadded;
 
-		// // get image offset calculation
-		// // is slides slightly because of scaling so we have to take a measurement from the rendered page
-		// const actualFrameHeight = this.elem.querySelector('.frame').scrollHeight;
-
-		// // scroll to image
-		// this.elem.querySelector('.scroll-area').style.top = `${-this.screenIndex * actualFrameHeight}px`;
+		// Update the display if we have frames
+		if (this.mapFrames.length > 0) {
+			this.showFrame(this.screenIndex);
+		}
 
 		this.finishDraw();
-		// this.play();
-	}
-
-	play() {
-		Radar.showFrame(this.animationPosition + 1);
-
-		// Main animation driver. Run this function every 500 ms
-		this.animationTimer = setTimeout(this.play, 3000);
 	}
 }
 
