@@ -17,7 +17,7 @@ class Radar extends WeatherDisplay {
 	static tileSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}';
 
 	constructor(navId, elemId) {
-		super(navId, elemId, 'Local Radar', false);
+		super(navId, elemId, 'Local Radar', true);
 
 		this.okToDrawCurrentConditions = false;
 		this.okToDrawCurrentDateTime = false;
