@@ -17,6 +17,29 @@ class ExtendedForecast extends WeatherDisplay {
 		this.timing.totalScreens = 2;
 	}
 
+	static dayConditionTextSanitizer(text) {
+		let sanitizedText;
+		const spaces = text.split(' ');
+
+		if (spaces.length > 2) {
+			// text is too long, first word is
+			// likely "Slight" so we'll cut it.
+			sanitizedText = spaces.slice(0, 2).join(' ');
+
+			return sanitizedText;
+		}
+
+		// Special case for thunderstorm(s), as
+		// it clips into the other day panels
+		if (text.toLowerCase() === 'thunderstorm') {
+			// special case for thunderstorms
+			sanitizedText = 'Thunder';
+			return sanitizedText;
+		}
+
+		return text;
+	}
+
 	async getData(_weatherParameters) {
 		if (!super.getData(_weatherParameters)) return;
 
@@ -36,7 +59,7 @@ class ExtendedForecast extends WeatherDisplay {
 		const days = forecast.map((Day) => {
 			const fill = {
 				icon: { type: 'img', src: Day.icon },
-				condition: Day.text,
+				condition: ExtendedForecast.dayConditionTextSanitizer(Day.text),
 				date: Day.dayName,
 			};
 
