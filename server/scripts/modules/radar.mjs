@@ -1,229 +1,428 @@
-// current weather conditions display
+/* eslint-disable no-param-reassign */
+/* eslint-disable no-plusplus */
+/* eslint-disable no-underscore-dangle */
 import STATUS from './status.mjs';
-import { DateTime } from '../vendor/auto/luxon.mjs';
-import { loadImg } from './utils/image.mjs';
-import { text } from './utils/fetch.mjs';
-import { rewriteUrl } from './utils/cors.mjs';
 import WeatherDisplay from './weatherdisplay.mjs';
-import { registerDisplay, timeZone } from './navigation.mjs';
-import * as utils from './radar-utils.mjs';
+import { registerDisplay } from './navigation.mjs';
+import { DateTime } from '../vendor/auto/luxon.mjs';
+
+import { getConditionText } from './utils/weather.mjs';
+import { getWeatherIconFromIconLink } from './icons.mjs';
+
+import ConversionHelpers from './utils/conversionHelpers.mjs';
 
 class Radar extends WeatherDisplay {
+	static radarSource = 'https://api.rainviewer.com/public/weather-maps.json';
+
+	static tileSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}';
+
 	constructor(navId, elemId) {
 		super(navId, elemId, 'Local Radar', false);
 
 		this.okToDrawCurrentConditions = false;
 		this.okToDrawCurrentDateTime = false;
 
-		// set max images
+		this.radarLayers = [];
+		this.mapFrames = [];
+		this.animationPosition = 0;
+		this.lastPastFramePosition = -1;
+		this.loadingTilesCount = 0;
+		this.loadedTilesCount = 0;
+		this.radarData = {};
+		this.locationMarker = null;
+
+		this.radarOptions = {
+			kind: 'radar',
+			tileSize: 256,
+			colorScheme: 4,
+			smoothData: 1,
+			snowColors: 1,
+			extension: 'webp',
+		};
+
+		// Set max images - this will be updated when we get actual data
 		this.dopplerRadarImageMax = 6;
-		// update timing
-		this.timing.baseDelay = 350;
-		this.timing.delay = [
-			{ time: 4, si: 5 },
-			{ time: 1, si: 0 },
-			{ time: 1, si: 1 },
-			{ time: 1, si: 2 },
-			{ time: 1, si: 3 },
-			{ time: 1, si: 4 },
-			{ time: 4, si: 5 },
-			{ time: 1, si: 0 },
-			{ time: 1, si: 1 },
-			{ time: 1, si: 2 },
-			{ time: 1, si: 3 },
-			{ time: 1, si: 4 },
-			{ time: 4, si: 5 },
-			{ time: 1, si: 0 },
-			{ time: 1, si: 1 },
-			{ time: 1, si: 2 },
-			{ time: 1, si: 3 },
-			{ time: 1, si: 4 },
-			{ time: 12, si: 5 },
-		];
+
+		// Update timing for animation
+		this.timing.baseDelay = 500; // 500ms per frame
+		this.timing.delay = 1; // Each frame shows for 1 * baseDelay
+		this.timing.totalScreens = 1; // Will be updated when data loads
 	}
 
-	async getData(_weatherParameters) {
-		if (!super.getData(_weatherParameters)) return;
-		const weatherParameters = _weatherParameters ?? this.weatherParameters;
+	static createWeatherIconHTML(weatherCode, temperature, cityName, timeZone) {
+		const text = getConditionText(parseInt(weatherCode, 10));
+		const weatherIcon = getWeatherIconFromIconLink(text, timeZone, true);
 
-		// ALASKA AND HAWAII AREN'T SUPPORTED!
-		if (weatherParameters.state === 'AK' || weatherParameters.state === 'HI') {
-			this.setStatus(STATUS.noData);
+		return `
+		<div style="margin:0; padding: 0; display: flex; flex-direction: column;">
+			<div class="row-1" style="display: flex; width: 100%;">
+				<div style="
+					text-shadow: 3px 3px 0 #000, -1.5px -1.5px 0 #000, 0 -1.5px 0 #000, 1.5px -1.5px 0 #000, 1.5px 0 0 #000, 1.5px 1.5px 0 #000, 0 1.5px 0 #000, -1.5px 1.5px 0 #000, -1.5px 0 0 #000;
+					font-family: 'Star4000';
+					font-size: 18pt;"
+				>${cityName}</div>
+			</div>
+			<div class="temperature-icon" style="display: flex; align-items: center; margin-top: -14px;">
+				<div style="
+					padding-right: 6px;
+					font-family: 'Star4000';
+					text-shadow: 3px 3px 0 #000, -1.5px -1.5px 0 #000, 0 -1.5px 0 #000, 1.5px -1.5px 0 #000, 1.5px 0 0 #000, 1.5px 1.5px 0 #000, 0 1.5px 0 #000, -1.5px 1.5px 0 #000, -1.5px 0 0 #000;
+					font-size: 36px;
+					color: #ff0;">${Math.round(temperature)}</div>
+				<img src="${weatherIcon}" alt="Weather" style="width: auto; height: 40px;" />
+			</div>
+		</div>
+	`;
+	}
+
+	addLocationMarker(latitude, longitude, cityName, weatherData = null) {
+	// Remove existing marker if it exists
+		if (this.locationMarker && window._leafletMap) {
+			window._leafletMap.removeLayer(this.locationMarker);
+		}
+
+		if (!window._leafletMap) {
+			console.warn('Map not initialized');
 			return;
 		}
 
-		// get the base map
-		let src = 'images/4000RadarMap2.jpg';
-		if (weatherParameters.State === 'HI') src = 'images/HawaiiRadarMap2.png';
-		this.baseMap = await loadImg(src);
+		let markerContent;
 
-		const baseUrl = 'https://mesonet.agron.iastate.edu/archive/data/';
-		const baseUrlEnd = '/GIS/uscomp/';
-		const baseUrls = [];
-		let date = DateTime.utc().minus({ days: 1 }).startOf('day');
-
-		// make urls for yesterday and today
-		while (date <= DateTime.utc().startOf('day')) {
-			baseUrls.push(`${baseUrl}${date.toFormat('yyyy/LL/dd')}${baseUrlEnd}`);
-			date = date.plus({ days: 1 });
+		if (weatherData && weatherData.icon && weatherData.temperature !== undefined) {
+			markerContent = Radar.createWeatherIconHTML(
+				weatherData.icon,
+				weatherData.temperature,
+				cityName,
+				this.weatherParameters.timeZone,
+			);
+		} else {
+			// Simple city name marker
+			markerContent = `
+				<div class="city-marker" style="
+					background: rgba(0, 0, 0, 0.8);
+					color: white;
+					border-radius: 6px;
+					padding: 6px 10px;
+					font-family: Arial, sans-serif;
+					font-size: 14px;
+					font-weight: bold;
+					text-align: center;
+					box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+					border: 2px solid white;
+					white-space: nowrap;
+				">
+					${cityName}
+				</div>
+			`;
 		}
 
-		const lists = (await Promise.all(baseUrls.map(async (url) => {
-			try {
-			// get a list of available radars
-				return text(url, { cors: true });
-			} catch (error) {
-				console.log('Unable to get list of radars');
-				console.error(error);
-				this.setStatus(STATUS.failed);
-				return false;
-			}
-		}))).filter((d) => d);
-
-		// convert to an array of gif urls
-		const pngs = lists.flatMap((html, htmlIdx) => {
-			const parser = new DOMParser();
-			const xmlDoc = parser.parseFromString(html, 'text/html');
-			// add the base url
-			const base = xmlDoc.createElement('base');
-			base.href = baseUrls[htmlIdx];
-			xmlDoc.head.append(base);
-			const anchors = xmlDoc.querySelectorAll('a');
-			const urls = [];
-			Array.from(anchors).forEach((elem) => {
-				if (elem.innerHTML?.match(/n0r_\d{12}\.png/))	{
-					urls.push(elem.href);
-				}
-			});
-			return urls;
+		const customIcon = window.L.divIcon({
+			html: markerContent,
+			className: 'custom-weather-marker',
+			iconSize: [120, 60],
+			iconAnchor: [60, 60], // Center the marker
+			popupAnchor: [0, -60],
 		});
 
-		// get the last few images
-		const timestampRegex = /_(\d{12})\.png/;
-		const sortedPngs = pngs.sort((a, b) => (a.match(timestampRegex)[1] < b.match(timestampRegex)[1] ? -1 : 1));
-		const urls = sortedPngs.slice(-(this.dopplerRadarImageMax));
+		this.locationMarker = window.L.marker([latitude, longitude], {
+			icon: customIcon,
+			zIndexOffset: 1000, // Ensure it appears above other layers
+		}).addTo(window._leafletMap);
 
-		// calculate offsets and sizes
-		let offsetX = 120;
-		let offsetY = 69;
-		const width = 2550;
-		const height = 1600;
-		offsetX *= 2;
-		offsetY *= 2;
-		const sourceXY = utils.getXYFromLatitudeLongitudeMap(weatherParameters, offsetX, offsetY);
+		return this.locationMarker;
+	}
 
-		// create working context for manipulation
-		const workingCanvas = document.createElement('canvas');
-		workingCanvas.width = width;
-		workingCanvas.height = height;
-		const workingContext = workingCanvas.getContext('2d');
-		workingContext.imageSmoothingEnabled = false;
+	updateLocationMarker(weatherData) {
+		if (!this.locationMarker || !weatherData) return;
 
-		// calculate radar offsets
-		const radarOffsetX = 120;
-		const radarOffsetY = 70;
-		const radarSourceXY = utils.getXYFromLatitudeLongitudeDoppler(weatherParameters, offsetX, offsetY);
-		const radarSourceX = radarSourceXY.x / 2;
-		const radarSourceY = radarSourceXY.y / 2;
+		const markerContent = Radar.createWeatherIconHTML(
+			weatherData.icon,
+			ConversionHelpers.convertTemperatureUnits(weatherData.temperature),
+			weatherData.cityName || 'Current Location',
+			this.weatherParameters.timeZone,
+		);
 
-		// Load the most recent doppler radar images.
-		const radarInfo = await Promise.all(urls.map(async (url) => {
-			// create destination context
-			const canvas = document.createElement('canvas');
-			canvas.width = 640;
-			canvas.height = 367;
-			const context = canvas.getContext('2d');
-			context.imageSmoothingEnabled = false;
+		const customIcon = window.L.divIcon({
+			html: markerContent,
+			className: 'custom-weather-marker',
+			iconSize: [120, 60],
+			iconAnchor: [60, 60],
+			popupAnchor: [0, -60],
+		});
 
-			// get the image
-			const response = await fetch(rewriteUrl(url));
+		this.locationMarker.setIcon(customIcon);
+	}
 
-			// test response
-			if (!response.ok) throw new Error(`Unable to fetch radar error ${response.status} ${response.statusText} from ${response.url}`);
+	isTilesLoading() {
+		return this.loadingTilesCount > this.loadedTilesCount;
+	}
 
-			// get the blob
-			const blob = await response.blob();
+	static removeLayer(layer) {
+		if (!layer) {
+			console.warn('Tried to remove a layer, but layer is undefined or null');
+			return;
+		}
 
-			// store the time
-			const timeMatch = url.match(/_(\d{4})(\d\d)(\d\d)(\d\d)(\d\d)\./);
-			let time;
-			if (timeMatch) {
-				const [, year, month, day, hour, minute] = timeMatch;
-				time = DateTime.fromObject({
-					year,
-					month,
-					day,
-					hour,
-					minute,
-				}, {
-					zone: 'UTC',
-				}).setZone(timeZone());
+		if (!window._leafletMap) {
+			console.warn('Leaflet map is not initialized');
+			return;
+		}
+
+		if (!window._leafletMap.hasLayer(layer)) {
+			console.warn('Layer not found on the map:', layer);
+			return;
+		}
+
+		console.log('Removing layer:', layer);
+		window._leafletMap.removeLayer(layer);
+	}
+
+	addLayer(frame) {
+		if (!frame) return null;
+
+		const tileUrl = `${this.radarData.host}${frame.path}/${this.radarOptions.tileSize}/{z}/{x}/{y}/${this.radarOptions.colorScheme}/${this.radarOptions.smoothData}_${this.radarOptions.snowColors}.${this.radarOptions.extension}`;
+
+		// Check if layer already exists
+		const existingLayer = this.radarLayers.find((layer) => layer._url && layer._url.includes(frame.path));
+
+		if (existingLayer) {
+			return existingLayer;
+		}
+
+		const source = new window.L.TileLayer(tileUrl, {
+			tileSize: this.radarOptions.tileSize,
+			opacity: 0, // Start invisible
+			zIndex: frame.time,
+		});
+
+		// Add event handlers for tile loading
+		source.on('loading', () => {
+			this.loadingTilesCount++;
+		});
+
+		source.on('load', () => {
+			this.loadedTilesCount++;
+		});
+
+		source.on('tileerror', (e) => {
+			console.warn('Tile failed to load:', e);
+			this.loadedTilesCount++; // Count failed tiles as "loaded" to prevent infinite waiting
+		});
+
+		this.radarLayers.push(source);
+		source.addTo(window._leafletMap);
+
+		return source;
+	}
+
+	changeRadarPosition(position, preloadOnly = false, force = false) {
+	// Wrap position to valid range
+		while (position >= this.mapFrames.length) {
+			position -= this.mapFrames.length;
+		}
+		while (position < 0) {
+			position += this.mapFrames.length;
+		}
+
+		if (this.mapFrames.length === 0) return;
+
+		const nextFrame = this.mapFrames[position];
+
+		// Find or create the layer for the next frame
+		let nextLayer = this.radarLayers.find((layer) => layer._url && layer._url.includes(nextFrame.path));
+
+		if (!nextLayer) {
+			nextLayer = this.addLayer(nextFrame);
+		}
+
+		// Quit if this call is for preloading only
+		if (preloadOnly) {
+			return;
+		}
+
+		// Don't wait for tiles if forced, or if we're not currently loading
+		if (!force && this.isTilesLoading()) {
+		// Set a timeout to try again
+			setTimeout(() => {
+				this.changeRadarPosition(position, false, true);
+			}, 100);
+			return;
+		}
+
+		// Hide all layers first
+		this.radarLayers.forEach((layer) => {
+			if (layer && layer.setOpacity) {
+				layer.setOpacity(0);
+			}
+		});
+
+		// Update position
+		this.animationPosition = position;
+
+		// Show the current frame
+		if (nextLayer && nextLayer.setOpacity) {
+			nextLayer.setOpacity(0.8);
+		}
+
+		// Update timestamp display
+		this.updateTimestamp(nextFrame);
+	}
+
+	updateTimestamp(frame) {
+		const timeElem = this.elem.querySelector('.time');
+		if (timeElem && frame.time) {
+			const frameTime = DateTime.fromSeconds(frame.time);
+			const pastOrForecast = frame.time > Date.now() / 1000 ? 'FORECAST' : 'PAST';
+			const timeString = frameTime.toLocaleString(DateTime.TIME_SIMPLE);
+			timeElem.innerHTML = `${pastOrForecast}: ${timeString}`;
+		}
+	}
+
+	showFrame(nextPosition, force = false) {
+		if (this.mapFrames.length === 0) return;
+
+		const preloadingDirection = nextPosition - this.animationPosition > 0 ? 1 : -1;
+
+		this.changeRadarPosition(nextPosition, false, force);
+
+		// Preload next frame
+		const preloadPosition = (nextPosition + preloadingDirection + this.mapFrames.length) % this.mapFrames.length;
+		this.changeRadarPosition(preloadPosition, true);
+	}
+
+	static async getRadarData() {
+		try {
+			const response = await fetch(Radar.radarSource);
+			return await response.json();
+		} catch (error) {
+			console.error('Failed to fetch radar data:', error);
+			throw error;
+		}
+	}
+
+	async initializeRadar(api, kind = 'radar') {
+		// Clear existing layers
+		if (window._leafletMap && Array.isArray(this.radarLayers)) {
+			this.radarLayers.forEach((layer) => {
+				if (window._leafletMap.hasLayer(layer)) {
+					window._leafletMap.removeLayer(layer);
+				}
+			});
+		}
+
+		// Reset state
+		this.mapFrames = [];
+		this.radarLayers = [];
+		this.animationPosition = 0;
+		this.loadingTilesCount = 0;
+		this.loadedTilesCount = 0;
+
+		if (!api) return;
+
+		if (kind === 'satellite' && api.satellite && api.satellite.infrared) {
+			this.mapFrames = api.satellite.infrared;
+			this.lastPastFramePosition = api.satellite.infrared.length - 1;
+		} else if (api.radar && api.radar.past) {
+			this.mapFrames = [...api.radar.past];
+			if (api.radar.nowcast) {
+				this.mapFrames = this.mapFrames.concat(api.radar.nowcast);
+			}
+			this.lastPastFramePosition = api.radar.past.length - 1;
+		}
+
+		// Update timing based on actual frame count
+		this.timing.totalScreens = this.mapFrames.length;
+		this.calcNavTiming();
+
+		// Show initial frame
+		if (this.mapFrames.length > 0) {
+			this.showFrame(this.lastPastFramePosition, true);
+		}
+	}
+
+	refreshCurrentFrame() {
+		if (this.mapFrames.length > 0) {
+			this.showFrame(this.animationPosition, true);
+		}
+	}
+
+	async getData(_weatherParameters) {
+		const superResult = super.getData(_weatherParameters);
+		if (!superResult) return;
+
+		const weatherParameters = _weatherParameters ?? this.weatherParameters;
+
+		const leafletDefaultZoom = 7;
+		const leafletInitializationOptions = {
+			zoomControl: false,
+			dragging: false,
+			touchZoom: false,
+			scrollWheelZoom: false,
+			doubleClickZoom: false,
+			boxZoom: false,
+			keyboard: false,
+			tap: false,
+			attributionControl: false,
+		};
+
+		try {
+			const mapContainer = document.getElementById('map');
+
+			// Initialize Leaflet map if not already done
+			if (!mapContainer._leaflet_id) {
+				window._leafletMap = window.L.map(mapContainer, leafletInitializationOptions)
+					.setView([weatherParameters.latitude, weatherParameters.longitude], leafletDefaultZoom);
+
+				window.L.tileLayer(Radar.tileSource, {
+					attribution: 'Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri',
+				}).addTo(window._leafletMap);
 			} else {
-				time = DateTime.fromHTTP(response.headers.get('last-modified')).setZone(timeZone());
+				window._leafletMap.setView([weatherParameters.latitude, weatherParameters.longitude], leafletDefaultZoom);
 			}
 
-			// assign to an html image element
-			const imgBlob = await loadImg(blob);
+			// Get radar data
+			this.radarData = await Radar.getRadarData();
+			await this.initializeRadar(this.radarData, 'radar');
 
-			// draw the entire image
-			workingContext.clearRect(0, 0, width, 1600);
-			workingContext.drawImage(imgBlob, 0, 0, width, 1600);
+			const todayKey = DateTime.now().setZone(weatherParameters.timeZone).toFormat('yyyy-MM-dd');
 
-			// get the base map
-			context.drawImage(await this.baseMap, sourceXY.x, sourceXY.y, offsetX * 2, offsetY * 2, 0, 0, 640, 367);
-
-			// crop the radar image
-			const cropCanvas = document.createElement('canvas');
-			cropCanvas.width = 640;
-			cropCanvas.height = 367;
-			const cropContext = cropCanvas.getContext('2d', { willReadFrequently: true });
-			cropContext.imageSmoothingEnabled = false;
-			cropContext.drawImage(workingCanvas, radarSourceX, radarSourceY, (radarOffsetX * 2), (radarOffsetY * 2.33), 0, 0, 640, 367);
-			// clean the image
-			utils.removeDopplerRadarImageNoise(cropContext);
-
-			// merge the radar and map
-			utils.mergeDopplerRadarImage(context, cropContext);
-
-			const elem = this.fillTemplate('frame', { map: { type: 'img', src: canvas.toDataURL() } });
-
-			return {
-				canvas,
-				time,
-				elem,
+			const currentWeatherData = {
+				icon: weatherParameters.forecast[todayKey].weather_code,
+				temperature: weatherParameters.Temperature,
+				city: weatherParameters.city,
 			};
-		}));
 
-		// put the elements in the container
-		const scrollArea = this.elem.querySelector('.scroll-area');
-		scrollArea.innerHTML = '';
-		scrollArea.append(...radarInfo.map((r) => r.elem));
+			this.addLocationMarker(
+				weatherParameters.latitude,
+				weatherParameters.longitude,
+				weatherParameters.city,
+				currentWeatherData,
+			);
 
-		// set max length
-		this.timing.totalScreens = radarInfo.length;
-		// store the images
-		this.data = radarInfo.map((radar) => radar.canvas);
+			this.setStatus(STATUS.loaded);
+		} catch (error) {
+			console.error('Failed to initialize radar:', error);
+			this.setStatus(STATUS.failed);
+		}
+	}
 
-		this.times = radarInfo.map((radar) => radar.time);
-		this.setStatus(STATUS.loaded);
+	// Handle screen index changes from base class navigation
+	screenIndexChange(screenIndex) {
+		if (this.mapFrames.length > 0) {
+			this.showFrame(screenIndex);
+		}
 	}
 
 	async drawCanvas() {
 		super.drawCanvas();
-		const time = this.times[this.screenIndex].toLocaleString(DateTime.TIME_SIMPLE);
-		const timePadded = time.length >= 8 ? time : `&nbsp;${time}`;
-		this.elem.querySelector('.header .right .time').innerHTML = timePadded;
 
-		// get image offset calculation
-		// is slides slightly because of scaling so we have to take a measurement from the rendered page
-		const actualFrameHeight = this.elem.querySelector('.frame').scrollHeight;
-
-		// scroll to image
-		this.elem.querySelector('.scroll-area').style.top = `${-this.screenIndex * actualFrameHeight}px`;
+		// Update the display if we have frames
+		if (this.mapFrames.length > 0) {
+			this.showFrame(this.screenIndex);
+		}
 
 		this.finishDraw();
 	}
 }
 
-// register display
 registerDisplay(new Radar(10, 'radar'));
