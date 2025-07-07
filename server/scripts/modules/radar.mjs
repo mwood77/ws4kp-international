@@ -1,7 +1,6 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-plusplus */
 /* eslint-disable no-underscore-dangle */
-// current weather conditions display
 import STATUS from './status.mjs';
 import WeatherDisplay from './weatherdisplay.mjs';
 import { registerDisplay } from './navigation.mjs';
@@ -13,13 +12,16 @@ import { getWeatherIconFromIconLink } from './icons.mjs';
 import ConversionHelpers from './utils/conversionHelpers.mjs';
 
 class Radar extends WeatherDisplay {
+	static radarSource = 'https://api.rainviewer.com/public/weather-maps.json';
+
+	static tileSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}';
+
 	constructor(navId, elemId) {
 		super(navId, elemId, 'Local Radar', false);
 
 		this.okToDrawCurrentConditions = false;
 		this.okToDrawCurrentDateTime = false;
 
-		// Initialize instance properties
 		this.radarLayers = [];
 		this.mapFrames = [];
 		this.animationPosition = 0;
@@ -27,11 +29,8 @@ class Radar extends WeatherDisplay {
 		this.loadingTilesCount = 0;
 		this.loadedTilesCount = 0;
 		this.radarData = {};
-
-		// City location marker
 		this.locationMarker = null;
 
-		// Radar options
 		this.radarOptions = {
 			kind: 'radar',
 			tileSize: 256,
@@ -50,9 +49,9 @@ class Radar extends WeatherDisplay {
 		this.timing.totalScreens = 1; // Will be updated when data loads
 	}
 
-	static createWeatherIconHTML(weatherCode, temperature, cityName) {
+	static createWeatherIconHTML(weatherCode, temperature, cityName, timeZone) {
 		const text = getConditionText(parseInt(weatherCode, 10));
-		const weatherIcon = getWeatherIconFromIconLink(text, 'America/New_York', true);
+		const weatherIcon = getWeatherIconFromIconLink(text, timeZone, true);
 
 		return `
 		<div style="margin:0; padding: 0; display: flex; flex-direction: column;">
@@ -76,7 +75,6 @@ class Radar extends WeatherDisplay {
 	`;
 	}
 
-	// Method to add location marker
 	addLocationMarker(latitude, longitude, cityName, weatherData = null) {
 	// Remove existing marker if it exists
 		if (this.locationMarker && window._leafletMap) {
@@ -95,29 +93,29 @@ class Radar extends WeatherDisplay {
 				weatherData.icon,
 				weatherData.temperature,
 				cityName,
+				this.weatherParameters.timeZone,
 			);
 		} else {
-		// Simple city name marker
+			// Simple city name marker
 			markerContent = `
-			<div class="city-marker" style="
-				background: rgba(0, 0, 0, 0.8);
-				color: white;
-				border-radius: 6px;
-				padding: 6px 10px;
-				font-family: Arial, sans-serif;
-				font-size: 14px;
-				font-weight: bold;
-				text-align: center;
-				box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-				border: 2px solid white;
-				white-space: nowrap;
-			">
-				${cityName}
-			</div>
-		`;
+				<div class="city-marker" style="
+					background: rgba(0, 0, 0, 0.8);
+					color: white;
+					border-radius: 6px;
+					padding: 6px 10px;
+					font-family: Arial, sans-serif;
+					font-size: 14px;
+					font-weight: bold;
+					text-align: center;
+					box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+					border: 2px solid white;
+					white-space: nowrap;
+				">
+					${cityName}
+				</div>
+			`;
 		}
 
-		// Create custom divIcon
 		const customIcon = window.L.divIcon({
 			html: markerContent,
 			className: 'custom-weather-marker',
@@ -126,7 +124,6 @@ class Radar extends WeatherDisplay {
 			popupAnchor: [0, -60],
 		});
 
-		// Create and add marker
 		this.locationMarker = window.L.marker([latitude, longitude], {
 			icon: customIcon,
 			zIndexOffset: 1000, // Ensure it appears above other layers
@@ -135,7 +132,6 @@ class Radar extends WeatherDisplay {
 		return this.locationMarker;
 	}
 
-	// Method to update location marker with new weather data
 	updateLocationMarker(weatherData) {
 		if (!this.locationMarker || !weatherData) return;
 
@@ -143,6 +139,7 @@ class Radar extends WeatherDisplay {
 			weatherData.icon,
 			ConversionHelpers.convertTemperatureUnits(weatherData.temperature),
 			weatherData.cityName || 'Current Location',
+			this.weatherParameters.timeZone,
 		);
 
 		const customIcon = window.L.divIcon({
@@ -294,9 +291,8 @@ class Radar extends WeatherDisplay {
 	}
 
 	static async getRadarData() {
-		const radarSource = 'https://api.rainviewer.com/public/weather-maps.json';
 		try {
-			const response = await fetch(radarSource);
+			const response = await fetch(Radar.radarSource);
 			return await response.json();
 		} catch (error) {
 			console.error('Failed to fetch radar data:', error);
@@ -305,7 +301,7 @@ class Radar extends WeatherDisplay {
 	}
 
 	async initializeRadar(api, kind = 'radar') {
-	// Clear existing layers
+		// Clear existing layers
 		if (window._leafletMap && Array.isArray(this.radarLayers)) {
 			this.radarLayers.forEach((layer) => {
 				if (window._leafletMap.hasLayer(layer)) {
@@ -369,8 +365,6 @@ class Radar extends WeatherDisplay {
 			attributionControl: false,
 		};
 
-		const tileSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}';
-
 		try {
 			const mapContainer = document.getElementById('map');
 
@@ -379,7 +373,7 @@ class Radar extends WeatherDisplay {
 				window._leafletMap = window.L.map(mapContainer, leafletInitializationOptions)
 					.setView([weatherParameters.latitude, weatherParameters.longitude], leafletDefaultZoom);
 
-				window.L.tileLayer(tileSource, {
+				window.L.tileLayer(Radar.tileSource, {
 					attribution: 'Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri',
 				}).addTo(window._leafletMap);
 			} else {
@@ -390,7 +384,7 @@ class Radar extends WeatherDisplay {
 			this.radarData = await Radar.getRadarData();
 			await this.initializeRadar(this.radarData, 'radar');
 
-			const todayKey = DateTime.now().toFormat('yyyy-MM-dd');
+			const todayKey = DateTime.now().setZone(weatherParameters.timeZone).toFormat('yyyy-MM-dd');
 
 			const currentWeatherData = {
 				icon: weatherParameters.forecast[todayKey].weather_code,
@@ -431,5 +425,4 @@ class Radar extends WeatherDisplay {
 	}
 }
 
-// register display
 registerDisplay(new Radar(10, 'radar'));
