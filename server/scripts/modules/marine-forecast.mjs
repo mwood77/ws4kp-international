@@ -35,7 +35,7 @@ class MarineForecast extends WeatherDisplay {
 		const aggregatedForecastData = aggregateWeatherForecastData(_weatherParameters);
 
 		const currentTime = new Date();
-		const onlyToday = currentTime.toLocaleDateString('en-CA', { timeZone: aggregatedForecastData.timeZone }).split('T')[0]; // Extracts "YYYY-MM-DD"
+		const onlyToday = currentTime.toLocaleDateString('en-CA', { timeZone: _weatherParameters.timezone }).split('T')[0]; // Extracts "YYYY-MM-DD"
 
 		// today wind speed
 		const todayWindSpeedValues = aggregatedForecastData[onlyToday].hours.slice(0, 11).map((hour) => hour.wind_speed_10m);
