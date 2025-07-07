@@ -65,6 +65,7 @@ This is handled automatically as part of CI/CD, when your code is merged to `mai
 
 ## Updates in 11.0.0
 
+- Reintroduces Radar screen
 - Introduces ***Experimental Features***
 	- If this is enabled and data is present, cascading features ~~will~~ may appear across different displays; ex, additional city AQI values on the Air Quality Index Forecast.
 #### Under the hood
