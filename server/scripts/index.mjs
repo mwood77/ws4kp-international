@@ -270,8 +270,6 @@ const btnAudioClick = async () => {
 		return;
 	}
 
-	console.log(webampActive)
-
 	if (webampActive != null && webampActive === 'true') {
 		console.warn('Index - Webamp is hidden, cannot toggle audio.');
 		return;
