@@ -10,6 +10,8 @@ import { getConditionText } from './utils/weather.mjs';
 import { getWeatherIconFromIconLink } from './icons.mjs';
 
 import ConversionHelpers from './utils/conversionHelpers.mjs';
+import ExperimentalFeatures from './utils/experimental.mjs';
+import RadarBoundsCities from './utils/radar-bounds-cities.mjs';
 
 class Radar extends WeatherDisplay {
 	static radarSource = 'https://api.rainviewer.com/public/weather-maps.json';
@@ -337,6 +339,15 @@ class Radar extends WeatherDisplay {
 		// Show initial frame
 		if (this.mapFrames.length > 0) {
 			this.showFrame(this.lastPastFramePosition, true);
+		}
+
+		if (ExperimentalFeatures.getExperimentalFlag()) {
+			const bounds = window._leafletMap.getBounds();
+			const sw = bounds.getSouthWest();
+			const ne = bounds.getNorthEast();
+
+			const cities = await RadarBoundsCities.getBoundingBoxCities(sw.lng, sw.lat, ne.lng, ne.lat);
+			console.log('Cities in bounding box:', cities);
 		}
 	}
 
