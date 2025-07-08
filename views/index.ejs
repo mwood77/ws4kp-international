@@ -150,6 +150,7 @@
         <img id="NavigateRefresh" class="navButton" src="images/nav/ic_refresh_white_24dp_2x.png" title="Refresh" />
       </div>
       <div id="divTwcBottomRight">
+        <img id="ToggleMusic" class="navButton" src="images/nav/ic_volume_off_white_24dp_2x.png" title="Toggle Music" />
         <img id="ToggleFullScreen" class="navButton" src="images/nav/ic_fullscreen_white_24dp_2x.png" title="Enter Fullscreen" />
       </div>
     </div>
@@ -230,7 +231,7 @@
   </div>
 
   <script type="module">
-      import Webamp from "https://unpkg.com/webamp@^2";
+      import Webamp from "https://unpkg.com/webamp@next";
       const webamp = new Webamp({    
           windowLayout: {
             main: {
@@ -469,13 +470,15 @@
       window.webamp = webamp;
 
       // Dispatch repeat and volume actions, as sensible defaults
-      webamp.store.dispatch({
-        type: "TOGGLE_REPEAT",
-      });
-      webamp.store.dispatch({
-        type: "SET_VOLUME",
-        volume: 100,
-      });
+      // webamp.store.dispatch({
+      //   type: "TOGGLE_REPEAT",
+      // });
+      // webamp.store.dispatch({
+      //   type: "SET_VOLUME",
+      //   volume: 100,
+      // });
+      webamp.setVolume(100);
+      webamp.toggleRepeat();
 
       webamp.renderWhenReady(document.getElementById("webamp-app"));
   </script>

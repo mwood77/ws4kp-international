@@ -25,6 +25,8 @@ const TXT_ADDRESS_SELECTOR = '#txtAddress';
 const TOGGLE_FULL_SCREEN_SELECTOR = '#ToggleFullScreen';
 const BNT_GET_GPS_SELECTOR = '#btnGetGps';
 
+let isAudioPlaying = false;
+
 const init = () => {
 	document.querySelector(TXT_ADDRESS_SELECTOR).addEventListener('focus', (e) => {
 		e.target.select();
@@ -37,6 +39,7 @@ const init = () => {
 	document.querySelector('#NavigateNext').addEventListener('click', btnNavigateNextClick);
 	document.querySelector('#NavigatePrevious').addEventListener('click', btnNavigatePreviousClick);
 	document.querySelector('#NavigatePlay').addEventListener('click', btnNavigatePlayClick);
+	document.querySelector('#ToggleMusic').addEventListener('click', btnAudioClick);
 	document.querySelector(TOGGLE_FULL_SCREEN_SELECTOR).addEventListener('click', btnFullScreenClick);
 	const btnGetGps = document.querySelector(BNT_GET_GPS_SELECTOR);
 	btnGetGps.addEventListener('click', btnGetGpsClick);
@@ -246,6 +249,44 @@ const exitFullScreenVisibilityChanges = () => {
 const btnNavigateMenuClick = () => {
 	postMessage('navButton', 'menu');
 	return false;
+};
+
+const updateAudioButton = () => {
+	const btnAudio = document.querySelector('#ToggleMusic');
+	if (isAudioPlaying) {
+		btnAudio.src = 'images/nav/ic_volume_up_white_24dp_2x.png';
+		btnAudio.title = 'Pause Music';
+	} else {
+		btnAudio.src = 'images/nav/ic_volume_off_white_24dp_2x.png';
+		btnAudio.title = 'Play Music';
+	}
+};
+
+const btnAudioClick = async () => {
+	const webampActive = document.documentElement.getAttribute('hide-webamp');
+
+	if (!window.webamp) {
+		console.warn('Index - Webamp not initialized yet.');
+		return;
+	}
+
+	console.log(webampActive)
+
+	if (webampActive != null && webampActive === 'true') {
+		console.warn('Index - Webamp is hidden, cannot toggle audio.');
+		return;
+	}
+
+	isAudioPlaying = !isAudioPlaying;
+	if (isAudioPlaying) {
+		// eslint-disable-next-line no-undef
+		await webamp.play();
+	} else {
+		// eslint-disable-next-line no-undef
+		await webamp.pause();
+	}
+
+	updateAudioButton();
 };
 
 const loadData = (_latLon, haveDataCallback) => {
