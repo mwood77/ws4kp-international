@@ -74,6 +74,23 @@ function getMarineAdvisory(periodMarineData, dailyWindMinMaxInKnots) {
 	return advisory.toUpperCase();
 }
 
+// Used to calculate the distance between two points on the Earth specified in latitude and longitude
+// Used for calculating distance between two points on the map
+// Returns the distance in kilometers
+function haversineDistance(lat1, lon1, lat2, lon2) {
+	const R = 6371; // Earth radius in km
+	const toRad = (deg) => deg * Math.PI / 180;
+
+	const dLat = toRad(lat2 - lat1);
+	const dLon = toRad(lon2 - lon1);
+
+	const a = Math.sin(dLat / 2) ** 2
+            + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2))
+            * Math.sin(dLon / 2) ** 2;
+
+	return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 const distance = (x1, y1, x2, y2) => Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 
 // wrap a number to 0-m
@@ -83,6 +100,7 @@ export {
 	calculateSeasCondition,
 	getMarineAdvisory,
 	directionToNSEW,
+	haversineDistance,
 	distance,
 	wrap,
 };

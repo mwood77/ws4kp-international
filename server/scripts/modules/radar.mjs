@@ -8,6 +8,7 @@ import { DateTime } from '../vendor/auto/luxon.mjs';
 
 import { getConditionText } from './utils/weather.mjs';
 import { getWeatherIconFromIconLink } from './icons.mjs';
+import { haversineDistance } from './utils/calc.mjs';
 
 import ConversionHelpers from './utils/conversionHelpers.mjs';
 import ExperimentalFeatures from './utils/experimental.mjs';
@@ -49,6 +50,32 @@ class Radar extends WeatherDisplay {
 		this.timing.baseDelay = 500; // 500ms per frame
 		this.timing.delay = 1; // Each frame shows for 1 * baseDelay
 		this.timing.totalScreens = 1; // Will be updated when data loads
+	}
+
+	// this is for the nearby cities _only_
+	static getWeatherForCityFromNearestHour(cityOpenMeteoData) {
+		if (!cityOpenMeteoData || !cityOpenMeteoData.time) return null;
+
+		const now = new Date();
+		const currentHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours());
+
+		let nearestIndex = 0;
+		let smallestDiff = Infinity;
+
+		for (let i = 0; i < cityOpenMeteoData.time.length; i++) {
+			const dataTime = new Date(cityOpenMeteoData.time[i]);
+			const diff = Math.abs(dataTime - currentHour);
+			if (diff < smallestDiff) {
+				smallestDiff = diff;
+				nearestIndex = i;
+			}
+		}
+
+		return {
+			time: cityOpenMeteoData.time[nearestIndex],
+			temperature: cityOpenMeteoData.temperature_2m[nearestIndex],
+			weatherCode: cityOpenMeteoData.weather_code[nearestIndex]
+		};
 	}
 
 	static createWeatherIconHTML(weatherCode, temperature, cityName, timeZone) {
@@ -148,7 +175,7 @@ class Radar extends WeatherDisplay {
 			html: markerContent,
 			className: 'custom-weather-marker',
 			iconSize: [120, 60],
-			iconAnchor: [60, 60],
+			iconAnchor: [60, 60], // Center the marker
 			popupAnchor: [0, -60],
 		});
 
@@ -347,7 +374,56 @@ class Radar extends WeatherDisplay {
 			const ne = bounds.getNorthEast();
 
 			const cities = await RadarBoundsCities.getBoundingBoxCities(sw.lng, sw.lat, ne.lng, ne.lat);
-			console.log('Cities in bounding box:', cities);
+
+			// Do this so the map isn't cluttered around origin location
+			const filteredCities = cities.filter((city) => {
+				const distance = haversineDistance(this.weatherParameters.latitude, this.weatherParameters.longitude, parseFloat(city.lat), parseFloat(city.lon));
+				return distance >= 40;	// 40km away from the main city
+			});
+
+			filteredCities.forEach(async (cityData) => {
+				// Check if this city is not the main city and not within 20km of any other city in filteredCities
+				if (
+					cityData.city !== this.weatherParameters.city
+					// this is a distance check to again avoid cluttering the map with too many markers
+					&& !filteredCities.some(
+						(other) => other !== cityData
+							&& haversineDistance(
+								parseFloat(cityData.lat),
+								parseFloat(cityData.lon),
+								parseFloat(other.lat),
+								parseFloat(other.lon),
+							) < 40,	// 40km away from any other city in the filtered list
+					)
+				) {
+					const lat = parseFloat(cityData.lat);
+					const lon = parseFloat(cityData.lon);
+					const name = cityData.city;
+
+					const weatherData = await RadarBoundsCities.getWeatherForCity(lat, lon);
+					const cityWeather = Radar.getWeatherForCityFromNearestHour(weatherData);
+
+					const location = Radar.createWeatherIconHTML(
+						cityWeather.weatherCode,
+						cityWeather.temperature,
+						name,
+						this.weatherParameters.timeZone,
+					);
+
+					// Optional: Customize marker with no icon, just a text label
+					const label = window.L.marker([lat, lon], {
+						icon: window.L.divIcon({
+							className: 'custom-weather-marker',
+							html: location,
+							iconSize: [100, 20],
+							iconAnchor: [50, 10],
+						}),
+						interactive: false, // Makes sure the label doesn't block clicks
+					});
+
+					label.addTo(window._leafletMap);
+				}
+			});
 		}
 	}
 

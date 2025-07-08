@@ -11,24 +11,25 @@ export default class RadarBoundsCities {
 
 		const pointCornerWest = `Point(${cornerWestLat} ${cornerWestLng})`;
 		const pointCornerEast = `Point(${cornerEastLat} ${cornerEastLng})`;
+		const limit = 7;
 
 		const query = `
-        SELECT ?item ?itemLabel ?coord ?population WHERE {
-        ?item wdt:P31 wd:Q515 .                 # Instance of city
-        ?item wdt:P1082 ?population .           # Population
-        FILTER(?population > 50000)             # Filter for cities with population greater than 50,000
-        ?item wdt:P625 ?coord .                 # Coordinates of the city
-        
-        SERVICE wikibase:box {
-            ?item wdt:P625 ?location .
-            bd:serviceParam wikibase:cornerWest "${pointCornerWest}"^^geo:wktLiteral .
-            bd:serviceParam wikibase:cornerEast "${pointCornerEast}"^^geo:wktLiteral .
-        }
+            SELECT ?item ?itemLabel ?coord ?population WHERE {
+            ?item wdt:P31 wd:Q515 .                 # Instance of city
+            ?item wdt:P1082 ?population .           # Population
+            FILTER(?population > 50000)             # Filter for cities with population greater than 50,000
+            ?item wdt:P625 ?coord .                 # Coordinates of the city
+            
+            SERVICE wikibase:box {
+                ?item wdt:P625 ?location .
+                bd:serviceParam wikibase:cornerWest "${pointCornerWest}"^^geo:wktLiteral .
+                bd:serviceParam wikibase:cornerEast "${pointCornerEast}"^^geo:wktLiteral .
+            }
 
-        SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
-        }
-        ORDER BY DESC(?population)
-        LIMIT 10
+            SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+            }
+            ORDER BY DESC(?population)
+            LIMIT ${limit}
         `;
 
 		return baseUrl + encodeURIComponent(query);
@@ -80,5 +81,12 @@ export default class RadarBoundsCities {
 
 				return Array.from(finalResult);
 			});
+	}
+
+	static async getWeatherForCity(lat, lon) {
+		const openMeteoAdditionalForecastParameters = '&hourly=temperature_2m,weather_code&forecast_days=1&timezone=auto';
+		return fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}${openMeteoAdditionalForecastParameters}`)
+			.then((res) => res.json())
+			.then((response) => response.hourly);
 	}
 }
