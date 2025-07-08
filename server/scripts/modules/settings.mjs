@@ -140,7 +140,11 @@ const experimentalFeaturesChange = (value) => {
 };
 
 const hideWebampChange = async (value) => {
-	if (value) document.documentElement.setAttribute('hide-webamp', value);
+	if (value) {
+		document.documentElement.setAttribute('hide-webamp', value);
+	} else {
+		document.documentElement.removeAttribute('hide-webamp');
+	}
 
 	// Webamp is a global variable, defined in a <script>
 	// tag in index.ejs, so we can access it directly
