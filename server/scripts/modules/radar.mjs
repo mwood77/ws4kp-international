@@ -271,7 +271,7 @@ class Radar extends WeatherDisplay {
 	updateTimestamp(frame) {
 		const timeElem = this.elem.querySelector('.time');
 		if (timeElem && frame.time) {
-			const frameTime = DateTime.fromSeconds(frame.time);
+			const frameTime = DateTime.fromSeconds(frame.time).setZone(this.weatherParameters.timeZone);
 			const pastOrForecast = frame.time > Date.now() / 1000 ? 'FORECAST' : 'PAST';
 			const timeString = frameTime.toLocaleString(DateTime.TIME_SIMPLE);
 			timeElem.innerHTML = `${pastOrForecast}: ${timeString}`;
