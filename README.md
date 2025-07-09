@@ -30,6 +30,140 @@ This project is based on the work of [Mike Battaglia](https://github.com/vbguyny
 	* Countless photos and videos of WeatherStar 4000 forecasts used as references.
 * [@netbymatt](https://github.com/netbymatt) for modernizing & module'ing Mike's original project. 
 
+## Architecture
+
+The original authors of this project tried to use as few libraries (and external dependencies) as possible - I'm trying my best to continue in this manner where applicable.
+
+However, some compromises were made while porting this to a different data providers. NOAA was replaced as the sole data provider, with the following:
+- Open Meteo
+	- General forecast: https://open-meteo.com/en/docs
+	- Marine forecast: https://open-meteo.com/en/docs/marine-weather-api
+	- Air Quality: https://open-meteo.com/en/docs/air-quality-api
+	- Geocoding: https://open-meteo.com/en/docs/geocoding-api
+- Wikipedia API and Wikidata Sparql API
+	- [Used for unconventional reverse-geocoding-like lookups](https://github.com/mwood77/ws4kp-international/blob/main/server/scripts/modules/utils/nearby-cities.mjs). It's actually a knowledge graph lookup, but we're splitting hairs here.
+- Rainviewer API for radar precipitation (this may change):
+	- https://www.rainviewer.com/api.html
+- ArcGIS by Esri for leaflet map tiles:
+	- https://www.arcgis.com/index.html
+
+The project architecture is MVC-like, where views (`~/views/`) are separated from logic handlers (`~/server/scripts/modules/`
+), but there is no distinct flow-control logic. I hope to rectify this in the future.
+
+The closest flow control is handled in these files:
+- Entry point is: 
+	- https://github.com/mwood77/ws4kp-international/blob/main/server/scripts/index.mjs
+- A majority of the local storage manipulation is handled [here](https://github.com/mwood77/ws4kp-international/blob/7c13654b32f639e9c24c057ac1948b194d3f2aa4/server/scripts/index.mjs#L84-L146), but there are some outliers. This mostly pertains to Query Param handling, which needs a refactor. [See this issue](https://github.com/mwood77/ws4kp-international/issues/55)
+- Core forecast information is retrieved here: 
+	- https://github.com/mwood77/ws4kp-international/blob/main/server/scripts/modules/utils/weather.mjs
+- Global settings are instantiated here: 
+	- https://github.com/mwood77/ws4kp-international/blob/main/server/scripts/modules/settings.mjs
+- Base `Setting` class handles initialization and individual (local) storage: 
+	- https://github.com/mwood77/ws4kp-international/blob/main/server/scripts/modules/utils/setting.mjs
+
+Formatted weather data is passed into each "view controller" through their constructor as `_weatherParameters` (in getData(...)), and generally assigned to `this.weatherParameters` or `this.data` (depends on who authored the module). This data object looks like:
+
+```js
+// Example data for Tokyo
+
+{
+    "latitude": 35.6894,
+    "longitude": 139.6917,
+    "city": "Tokyo",
+    "state": "Tokyo",
+    "country": "Japan",
+    "timeZone": "Asia/Tokyo",
+    "forecast": {
+        "2025-07-09": {	// Day
+            "hours": [
+				...
+				// Data points per hour
+			],
+			// All parent values beneath are "daily" values, which were average from the "hours" array
+            "temperature_2m": 28.64583333333333,
+            "relative_humidity_2m": 78.79166666666667,
+            "dew_point_2m": 24.424999999999994,
+            "apparent_temperature": 34.400000000000006,
+            "precipitation_probability": 0,
+            "precipitation": 0,
+            "rain": 0,
+            "showers": 0,
+            "snowfall": 0,
+            "snow_depth": 0,
+            "weather_code": "0",
+            "pressure_msl": 1010.9916666666668,
+            "surface_pressure": 1006.4291666666668,
+            "cloud_cover": 8.083333333333334,
+            "visibility": 24140,
+            "evapotranspiration": 0.07541666666666667,
+            "et0_fao_evapotranspiration": 0.2233333333333333,
+            "vapour_pressure_deficit": 0.8979166666666667,
+            "uv_index": 2.672916666666667,
+            "uv_index_clear_sky": 2.672916666666667,
+            "is_day": 0.5833333333333334,
+            "sunshine_duration": 1849.0775,
+            "wet_bulb_temperature_2m": 25.545833333333334,
+            "wind_speed_10m": 6.379166666666666,
+            "wind_direction_10m": 181.25,
+            "wind_gusts_10m": 32.074999999999996,
+            "temperature_2m_max": 32.5,
+            "temperature_2m_min": 25.5,
+            "uv_index_max": 8.35
+        }
+    },
+    "stationId": "stationId-dont-matter-anymore",
+    "zoneId": "zoneId-dont-matter",
+    "radarId": "radarId-dont-matter",
+    "weatherOffice": "weatherOffice-dont-matter",
+    "Temperature": 30,
+    "TemperatureUnit": "C",
+    "DewPoint": 24.2,
+    "Ceiling": 0.39,
+    "CeilingUnit": "km",
+    "Visibility": 24.14,
+    "VisibilityUnit": "km",
+    "WindSpeed": 8.7,
+    "WindDirection": "S",
+    "Pressure": 1010.1,
+    "CloudCover": 11,
+    "UV": 8,
+    "WindGust": 46.8,
+    "WindUnit": "km/h",
+    "Humidity": 71,
+    "PressureUnit": "hPa",
+    "PressureDirection": "steady",
+    "TextConditions": 0,
+    "nearbyCities": [
+        {
+            "city": "Tokyo",
+            "lat": "35.683889",
+            "lon": "139.774444",
+            "population": "9640742"
+        },
+        {
+            "city": "Yokohama",
+            "lat": "35.433333333",
+            "lon": "139.65",
+            "population": "3757630"
+        },
+        {
+            "city": "Osaka",
+            "lat": "34.69375",
+            "lon": "135.502111111",
+            "population": "2751862"
+        },
+        {
+            "city": "Nagoya",
+            "lat": "35.181388888",
+            "lon": "136.906388888",
+            "population": "2326844"
+        }
+    ]
+}
+```
+
+Lastly, `ws4kp-international` utilizes a customized instance of [`cors-anywhere`](https://github.com/Rob--W/cors-anywhere) to manage CORS on some APIs. This instance of `cors-anywhere` is owned and managed by me (@mwood77), and is only available to this project. It does not collect any personally identifiable information (PII) and can only interact with the Wikidata API. Features that use this proxy are not enabled by default - the proxy is only utilized when "**Experimental Features**" are enabled.
+
 ## Run Your WeatherStar
 There are a lot of CORS considerations and issues with api.weather.gov that are easiest to deal with by running a local server to see this in action (or use the live link above). You'll need Node.js >12.0 to run the local server.
 
