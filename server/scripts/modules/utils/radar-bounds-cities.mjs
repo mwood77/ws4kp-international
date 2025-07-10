@@ -1,8 +1,7 @@
 import createToken from './hmac.mjs';
 
 const corsAnywhereKnownSources = [
-	// 'https://ws4kp.easypete.com/',
-	'http://localhost:8000/',
+	'https://ws4kp.easypete.com/',
 ];
 
 export default class RadarBoundsCities {

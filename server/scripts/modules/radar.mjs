@@ -382,7 +382,7 @@ class Radar extends WeatherDisplay {
 			});
 
 			filteredCities.forEach(async (cityData) => {
-				// Check if this city is not the main city and not within 20km of any other city in filteredCities
+				// Check if this city is not the main city and not within 30km of any other city in filteredCities
 				if (
 					cityData.city !== this.weatherParameters.city
 					// this is a distance check to again avoid cluttering the map with too many markers
@@ -393,7 +393,7 @@ class Radar extends WeatherDisplay {
 								parseFloat(cityData.lon),
 								parseFloat(other.lat),
 								parseFloat(other.lon),
-							) < 40,	// 40km away from any other city in the filtered list
+							) < 30,	// 30km away from any other city in the filtered list
 					)
 				) {
 					const lat = parseFloat(cityData.lat);
