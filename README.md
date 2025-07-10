@@ -201,7 +201,7 @@ This is handled automatically as part of CI/CD, when your code is merged to `mai
 
 - Reintroduces Radar screen
 - Introduces ***Experimental Features***
-	- If this is enabled and data is present, cascading features ~~will~~ may appear across different displays; ex, additional city AQI values on the Air Quality Index Forecast.
+	- If this is enabled and data is present, cascading features ~~will~~ may appear across different displays; ex, additional city AQI values on the Air Quality Index Forecast and Radar Screen.
 #### Under the hood
 - Nearby cities lookup; this is a new query, which gets national city data (top populous cities) when enabled.
 	- However this is a very slow query and somewhat unreliable (can take 2-5 seconds to resolve on location change). This data is written to localStorage once retrieved, and removed when "Experimental Features" is disabled.
@@ -250,7 +250,7 @@ However, there are some caveats. Migrating to Open Meteo means that there is som
 - Latest Observations
 - Travel Forecast
 - Regional Forecast
-- Local Radar
+- ~~Local Radar~~
 
 ## Updates in 5.0.0
 The change to 5.0 changes from drawing the weather graphics on canvas elements and instead uses HTML and CSS to style all of the weather graphics. A lot of other changes and fixes were implemented at the same time.
