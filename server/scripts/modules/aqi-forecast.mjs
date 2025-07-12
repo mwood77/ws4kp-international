@@ -68,7 +68,11 @@ class AirQualityForecast extends WeatherDisplay {
 				return parseAirQualityData(_weatherParameters, uniqueCity.aqiData, coreData);
 			});
 
-			// we only need 2 cities
+			// clear existing nearby cities, as duplicates may exist depending on user behavior;
+			// ex: changing location, search on same location again, force-refreshing, etc
+			this.nearbyCities.length = 0;
+
+			// update with only 2 cities due to view limitations
 			this.nearbyCities.push(...formattedNearbyData.slice(0, 2));
 		}
 
