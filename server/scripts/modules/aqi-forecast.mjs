@@ -29,7 +29,8 @@ class AirQualityForecast extends WeatherDisplay {
 		if (!super.getAqiData(_weatherParameters)) return;
 		this.setStatus(STATUS.loading);
 
-		// @todo - there's a problem where if the user changes location, the (local to this screen's) nearbyCities array isn't flushed. Or the display isn't flushed correctly...
+		// there's a problem where if the user changes location, the (local to this screen)
+		// nearbyCities array isn't flushed. Or the display isn't flushed correctly...
 		this.nearbyCities.length = 0;
 
 		// Check if API data is available, if not present error message
@@ -59,21 +60,28 @@ class AirQualityForecast extends WeatherDisplay {
 				}),
 			);
 
-			const formattedNearbyData = citiesAqiData.map((uniqueCity) => {
-				const coreData = {
-					country: this.data.country,
-					state: this.data.state,
-					city: uniqueCity.city,
-				};
-				return parseAirQualityData(_weatherParameters, uniqueCity.aqiData, coreData);
-			});
+			const formattedNearByData = citiesAqiData
+				.map((uniqueCity) => {
+					// some regions, like Tokyo, have multiple cities/areas with the same name as the city.
+					// so we filter those out to avoid duplicates showing on the view
+					if (uniqueCity.city.toLowerCase() !== this.data.city.toLowerCase()) {
+						const coreData = {
+							country: this.data.country,
+							state: this.data.state,
+							city: uniqueCity.city,
+						};
+						return parseAirQualityData(_weatherParameters, uniqueCity.aqiData, coreData);
+					}
+					return null;
+				})
+				.filter((city) => city !== null);
 
 			// clear existing nearby cities, as duplicates may exist depending on user behavior;
 			// ex: changing location, search on same location again, force-refreshing, etc
 			this.nearbyCities.length = 0;
 
 			// update with only 2 cities due to view limitations
-			this.nearbyCities.push(...formattedNearbyData.slice(0, 2));
+			this.nearbyCities.push(...formattedNearByData.slice(0, 2));
 		}
 
 		this.calcNavTiming();
