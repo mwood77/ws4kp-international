@@ -51,7 +51,7 @@ function generateLocalForecast(dateStamp, hourlyData) {
 			const peakHour = periodData.find((entry) => entry.precipitation_probability === maxPrecip)?.time;
 			const hour = new Date(peakHour).getHours();
 			const precipTime = `AFTER ${hour % 12 || 12} ${hour < 12 ? 'AM' : 'PM'}`;
-			precipChance = `${phraseVariations['CHANCE OF PRECIPITATION'][Math.floor(Math.random() * 3)]} ${precipTime}. CHANCE IS ${maxPrecip}%.`;
+			precipChance = `${phraseVariations['CHANCE OF PRECIPITATION'][Math.floor(Math.random() * phraseVariations['CHANCE OF PRECIPITATION'].length)]} ${precipTime}. CHANCE IS ${maxPrecip}%.`;
 		}
 
 		const cloudCover = periodData.map((entry) => entry.cloud_cover);
