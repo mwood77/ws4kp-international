@@ -2,6 +2,7 @@ import {
 	kphToKnots,
 	kphToMs,
 	kphToMph,
+	kphToBft,
 	knotsToMs,
 
 	celsiusToFahrenheit,
@@ -96,6 +97,9 @@ export default class ConversionHelpers {
 			case '4':
 				windUnitText = 'mph';
 				break;
+			case '5':
+				windUnitText = 'bft';
+				break;
 			default:
 				windUnitText = 'km/h';
 		}
@@ -108,12 +112,14 @@ export default class ConversionHelpers {
 		// [2, 'km/h'],
 		// [3, 'knots'],
 		// [4, 'mph'],
+		// [5, 'bft'],
 		const windUnits = document.documentElement.attributes.getNamedItem('wind-units').value;
 
 		if (windUnits === '1') return kphToMs(openMeteoValue); // m/s
 		if (windUnits === '2') return openMeteoValue; // km/h
 		if (windUnits === '3') return kphToKnots(openMeteoValue); // knots
 		if (windUnits === '4') return kphToMph(openMeteoValue); // mph
+		if (windUnits === '5') return kphToBft(openMeteoValue); // bft
 		return openMeteoValue;
 	}
 

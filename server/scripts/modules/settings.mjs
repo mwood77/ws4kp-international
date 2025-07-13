@@ -28,6 +28,7 @@ const init = () => {
 		[2, 'km/h'],
 		[3, 'knots'],
 		[4, 'mph'],
+		[5, 'bft']
 	]);
 	settings.marineWindUnits = new Setting('marineWindUnits', 'Wind Units (Marine)', 'select', 1, marineWindUnitsChange, true, [
 		[1, 'knots'],

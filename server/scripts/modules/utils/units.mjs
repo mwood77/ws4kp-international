@@ -6,6 +6,7 @@ const round2 = (value, decimals) => Math.trunc(value * 10 ** decimals) / 10 ** d
 const kphToKnots = (Kph) => Math.round((Kph * 0.539957) * 100) / 100; // 2 decimal places
 const kphToMs = (Kph) => Math.round((Kph / 3.6) * 100) / 100;		// 2 decimal places
 const kphToMph = (Kph) => Math.round(Kph / 1.609_34);
+const kphToBft = (Kph) => [1,6,12,20,29,39,50,62,75,89,103,118,Infinity].findIndex(b => Kph < b);
 const knotsToMs = (Knots) => {
 	const result = Math.round((Knots * 0.514_444) * 100) / 100; // 2 decimal places
 	return result;
@@ -32,6 +33,7 @@ export {
 	kphToKnots,
 	kphToMs,
 	kphToMph,
+	kphToBft,
 	knotsToMs,
 
 	celsiusToFahrenheit,
