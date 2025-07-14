@@ -13,11 +13,16 @@ import { haversineDistance } from './utils/calc.mjs';
 import ConversionHelpers from './utils/conversionHelpers.mjs';
 import ExperimentalFeatures from './utils/experimental.mjs';
 import RadarBoundsCities from './utils/radar-bounds-cities.mjs';
+import RadarUtils from './utils/radar-utils.mjs';
 
 class Radar extends WeatherDisplay {
 	static radarSource = 'https://api.rainviewer.com/public/weather-maps.json';
 
 	static tileSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}';
+
+	static defaultCityDistance = 40; 				// 40 km
+
+	static additionalLocationBufferDistance = 10; 	// 10 km
 
 	constructor(navId, elemId) {
 		super(navId, elemId, 'Local Radar', true);
@@ -74,7 +79,7 @@ class Radar extends WeatherDisplay {
 		return {
 			time: cityOpenMeteoData.time[nearestIndex],
 			temperature: cityOpenMeteoData.temperature_2m[nearestIndex],
-			weatherCode: cityOpenMeteoData.weather_code[nearestIndex]
+			weatherCode: cityOpenMeteoData.weather_code[nearestIndex],
 		};
 	}
 
@@ -148,7 +153,7 @@ class Radar extends WeatherDisplay {
 		const customIcon = window.L.divIcon({
 			html: markerContent,
 			className: 'custom-weather-marker',
-			iconSize: [120, 60],
+			iconSize: [140, 120],
 			iconAnchor: [60, 60], // Center the marker
 			popupAnchor: [0, -60],
 		});
@@ -174,7 +179,7 @@ class Radar extends WeatherDisplay {
 		const customIcon = window.L.divIcon({
 			html: markerContent,
 			className: 'custom-weather-marker',
-			iconSize: [120, 60],
+			iconSize: [140, 120],
 			iconAnchor: [60, 60], // Center the marker
 			popupAnchor: [0, -60],
 		});
@@ -378,7 +383,7 @@ class Radar extends WeatherDisplay {
 			// Do this so the map isn't cluttered around origin location
 			const filteredCities = cities.filter((city) => {
 				const distance = haversineDistance(this.weatherParameters.latitude, this.weatherParameters.longitude, parseFloat(city.lat), parseFloat(city.lon));
-				return distance >= 40;	// 40km away from the main city
+				return distance >= Radar.defaultCityDistance + Radar.additionalLocationBufferDistance;	// distance away from the main city
 			});
 
 			filteredCities.forEach(async (cityData) => {
@@ -393,7 +398,7 @@ class Radar extends WeatherDisplay {
 								parseFloat(cityData.lon),
 								parseFloat(other.lat),
 								parseFloat(other.lon),
-							) < 30,	// 30km away from any other city in the filtered list
+							) < Radar.defaultCityDistance,	// distance away from any other city in the filtered list
 					)
 				) {
 					const lat = parseFloat(cityData.lat);
@@ -410,12 +415,18 @@ class Radar extends WeatherDisplay {
 						this.weatherParameters.timeZone,
 					);
 
-					// Optional: Customize marker with no icon, just a text label
-					const label = window.L.marker([lat, lon], {
+					let latlng = window.L.latLng(lat, lon);
+					const overlapArea = RadarUtils.getMaxOverlapWithMarkers(latlng);
+
+					if (overlapArea > 0.3) {	// 30%
+						latlng = RadarUtils.jitterAwayFromOverlaps(latlng);
+					}
+
+					const label = window.L.marker(latlng, {
 						icon: window.L.divIcon({
 							className: 'custom-weather-marker',
 							html: location,
-							iconSize: [100, 20],
+							iconSize: [140, 120],
 							iconAnchor: [50, 10],
 						}),
 						interactive: false, // Makes sure the label doesn't block clicks
