@@ -189,7 +189,11 @@ After running this project in either way, pen your web browser:
 `ws4kp-international`'s main "showcase" is a deployed instance via GitHub Pages. To prepare a new release run the following command:
 
 ```
+# Mac & Linux users
 npm run build
+
+# Windows users
+npm run build:win
 ```
 
 This will update the artifacts in the `/docs` folder. Simply commit them as part of your branch, and push them to remote. Deployment will be handled automatically when your PR is merged into `main`.
