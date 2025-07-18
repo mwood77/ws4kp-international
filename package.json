@@ -10,7 +10,9 @@
 		"lint:fix": "eslint --fix ./server/scripts/**/*.mjs",
 		"start": "nodemon index.js",
 		"copy-assets": "mkdir -p docs/images && cp -r ./server/images docs && mkdir -p docs/fonts && cp -r ./server/fonts docs",
-		"build": "rm -rf docs/ && gulp && npm run copy-assets"
+		"build": "rm -rf docs/ && gulp && npm run copy-assets",
+		"copy-assets:win": "cmd /c \"mkdir docs\\images && xcopy /e /i /y server\\images docs\\images && mkdir docs\\fonts && xcopy /e /i /y server\\fonts docs\\fonts\"",
+		"build:win": "cmd /c \"rmdir /s /q docs && gulp && npm run copy-assets:win\""
 	},
 	"repository": {
 		"type": "git",
