@@ -7,22 +7,26 @@ function generateLocalForecast(dateStamp, hourlyData) {
 	const NIGHT_HOURS = [...Array(6).keys()].map((h) => h + 18).concat([...Array(6).keys()]); // 6 PM - 6 AM
 
 	const phraseVariations = {
-		'CHANCE OF PRECIPITATION': ['PRECIPITATION PROBABILITY', 'EXPECTED PRECIPITATION LIKELIHOOD'],
-		WIND: ['WINDS FROM THE', 'EXPECT WINDS COMING FROM', 'BREEZES BLOWING FROM'],
-		CLOUDY: ['CLOUD COVER', 'SKIES WILL BE MOSTLY CLOUDY', 'OVERCAST CONDITIONS EXPECTED'],
-		CLEAR: ['MOSTLY CLEAR SKIES', 'FEW CLOUDS EXPECTED', 'SKIES REMAINING CLEAR'],
+		'CHANCE OF PRECIPITATION': ['PRECIPITATION PROBABILITY', 'EXPECTED PRECIPITATION LIKELIHOOD', 'CHANCE OF SHOWERS', 'PRECIPITATION POSSIBLE', 'LIKELIHOOD OF RAIN', 'SHOWERS EXPECTED', 'PRECIPITATION LIKELY'],
+		WIND: ['WINDS FROM THE', 'EXPECT WINDS COMING FROM', 'BREEZES BLOWING FROM', 'BREEZES FROM THE', 'GUSTS COMING FROM THE', 'WINDS BLOWING IN FROM THE'],
+		CLOUDY: ['CLOUD COVER', 'SKIES WILL BE MOSTLY CLOUDY', 'OVERCAST CONDITIONS EXPECTED', 'PARTLY CLOUDY SKIES', 'MOSTLY CLOUDY WITH INTERVALS OF SUN', 'CLOUDS DOMINATING THE SKY'],
+		CLEAR: ['MOSTLY CLEAR SKIES', 'FEW CLOUDS EXPECTED', 'SKIES REMAINING CLEAR', 'CLEAR AND SUNNY', 'BRIGHT SKIES EXPECTED', 'VERY LITTLE CLOUD COVER'],
 		'SNOW SHOWERS': ['FLURRIES LIKELY', 'SNOWFALL EXPECTED', 'LIGHT SNOW POSSIBLE'],
 	};
 
 	const forecastTemplates = [
 		'{period}...  {cloudCover}, WITH A {tempLabel} AROUND {temp}. {windInfo}. {precipChance}',
-		'{period}: {cloudCover}, {tempLabel} NEAR {temp}. {windInfo}. {precipChance}',
-		'{period}: {cloudCover}, {tempLabel} CLOSE TO {temp}. {windInfo}. {precipChance}',
+		'{period}... {cloudCover}, {tempLabel} NEAR {temp}. {windInfo}. {precipChance}',
+		'{period}... {cloudCover}, {tempLabel} CLOSE TO {temp}. {windInfo}. {precipChance}',
 		'{cloudCover} THIS {period}, WITH {tempLabel} AROUND {temp}. {windInfo}. {precipChance}',
 		'{period} FORECAST: {cloudCover}, {tempLabel} {temp}. {windInfo}. {precipChance}',
 		'{period} OUTLOOK: {cloudCover}, EXPECT A {tempLabel} AROUND {temp}. {windInfo}. {precipChance}',
 		'{period} WEATHER: {cloudCover}, {tempLabel} AT {temp}. {windInfo}. {precipChance}',
-		'{period}: {cloudCover}, {tempLabel} CLOSE TO {temp}. {windInfo}. {precipChance}',
+		'{period}... {cloudCover}, {tempLabel} CLOSE TO {temp}. {windInfo}. {precipChance}',
+		'{period}... A {tempLabel} NEAR {temp}. {cloudCover}. {windInfo}. {precipChance}',
+		'{period}... {cloudCover}. {windInfo}. {precipChance} {tempLabel} AROUND {temp}.',
+		'{period} FORECAST: {cloudCover}, WITH TEMPERATURES AROUND {temp}. {windInfo}. {precipChance}',
+		'{period} WEATHER OUTLOOK: {cloudCover}. {windInfo}. {precipChance} EXPECT TEMPERATURES AROUND {temp}.',
 	];
 
 	function getMostFrequent(arr) {
@@ -35,11 +39,11 @@ function generateLocalForecast(dateStamp, hourlyData) {
 
 		if (!periodData.length) return null;
 
-		const temps = periodData.map((entry) => ConversionHelpers.convertTemperatureUnits(entry.temperature_2m));
+		const temps = periodData.map((entry) => ConversionHelpers.convertTemperatureUnits(Math.round(entry.temperature_2m)));
 		const temp = period === 'MORNING' ? Math.max(...temps) : Math.min(...temps);
 		const tempLabel = period === 'MORNING' ? 'HIGH' : 'LOW';
 
-		const windSpeeds = periodData.map((entry) => ConversionHelpers.convertWindUnits(entry.wind_speed_10m));
+		const windSpeeds = periodData.map((entry) => ConversionHelpers.convertWindUnits(Math.round(entry.wind_speed_10m)));
 		const windDirs = periodData.map((entry) => entry.wind_direction_10m);
 		const windInfo = `${directionToNSEW(getMostFrequent(windDirs))} WIND ${Math.min(...windSpeeds)} TO ${Math.max(...windSpeeds)} ${ConversionHelpers.getWindUnitText().toUpperCase()}`;
 

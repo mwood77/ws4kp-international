@@ -152,7 +152,7 @@ const parseData = (data) => {
 	const currentForecast = getCurrentWeatherByHourFromTime(data);
 
 	// values from api are provided in metric
-	data.Temperature = ConversionHelpers.convertTemperatureUnits(currentForecast.temperature_2m);
+	data.Temperature = ConversionHelpers.convertTemperatureUnits(Math.round(currentForecast.temperature_2m));
 	data.TemperatureUnit = ConversionHelpers.getTemperatureUnitText();
 	data.DewPoint = ConversionHelpers.convertTemperatureUnits(currentForecast.dew_point_2m);
 	data.Ceiling = ConversionHelpers.convertDistanceUnits(ConversionHelpers.calculateCeilingInKM(currentForecast.temperature_2m, currentForecast.dew_point_2m));
