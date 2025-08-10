@@ -70,16 +70,16 @@ const init = () => {
 	settings.experimentalFeatures = new Setting(
 		'experimentalFeatures',
 		'Experimental Features <a href="https://github.com/mwood77/ws4kp-international?tab=readme-ov-file#updates-in-1100" target="_blank" rel="noopener noreferrer">(info)</a>',
-		'boolean',
+		'checkbox',
 		false,
 		experimentalFeaturesChange,
 		true,
 	);
-	settings.hideWebamp = new Setting('hideWebamp', 'Hide Webamp (Winamp)', 'boolean', false, hideWebampChange, true);
-	settings.scanLines = new Setting('scanLines', 'Enable Scan Lines', 'boolean', false, scanLinesChange, true);
+	settings.hideWebamp = new Setting('hideWebamp', 'Hide Webamp (Winamp)', 'checkbox', false, hideWebampChange, true);
+	settings.scanLines = new Setting('scanLines', 'Enable Scan Lines', 'checkbox', false, scanLinesChange, true);
 
-	settings.wide = new Setting('wide', 'Widescreen', 'boolean', false, wideScreenChange, true);
-	settings.kiosk = new Setting('kiosk', 'Kiosk', 'boolean', false, kioskChange, false);
+	settings.wide = new Setting('wide', 'Widescreen', 'checkbox', false, wideScreenChange, true);
+	settings.kiosk = new Setting('kiosk', 'Kiosk', 'checkbox', false, kioskChange, false);
 
 	// generate html objects
 	const settingHtml = Object.values(settings).map((d) => d.generate());
