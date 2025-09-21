@@ -20,9 +20,11 @@ class Setting {
 		let urlState;
 		if (type === 'checkbox' && urlValue !== undefined) {
 			urlState = urlValue === 'true';
+			this.myValue = urlState;
 		}
 		if (type === 'select' && urlValue !== undefined) {
 			urlState = parseFloat(urlValue);
+			this.myValue = urlState;
 		}
 
 		// get existing value if present
