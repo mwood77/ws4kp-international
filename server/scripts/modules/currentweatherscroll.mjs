@@ -1,6 +1,7 @@
 import { elemForEach } from './utils/elem.mjs';
 import getCurrentWeather from './currentweather.mjs';
 import { currentDisplay } from './navigation.mjs';
+import { getConditionText } from './utils/weather.mjs';
 
 // constants
 const degree = String.fromCharCode(176);
@@ -68,6 +69,9 @@ const screens = [
 		}
 		return sanitizedText;
 	},
+
+	// condition
+	(data) => `Condition: ${getConditionText(data.TextConditions)}`,
 
 	// temperature
 	(data) => {
