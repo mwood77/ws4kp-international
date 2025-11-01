@@ -29,7 +29,9 @@ export default class RadarBoundsCities {
             }
             ORDER BY DESC(?population)
             LIMIT ${limit}
-        `;
+        `
+			.replace(/\s+/g, ' ') // ← collapse whitespace safely
+			.trim();
 
 		return baseUrl + encodeURIComponent(query);
 	}
