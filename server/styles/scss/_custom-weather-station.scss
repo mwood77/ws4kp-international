@@ -1,0 +1,35 @@
+@use 'shared/_colors'as c;
+@use 'shared/_utils'as u;
+
+#custom-weather-station-html.weather-display {
+	background-image: url('../images/Background12.png');
+}
+
+.weather-display .custom-weather-station {
+
+	&.show {
+		height: 480px;
+	}
+
+	.container {
+		position: relative;
+		top: 15px;
+		margin: 0px 10px;
+		box-sizing: border-box;
+		height: 280px;
+		overflow: hidden;
+	}
+
+	.forecasts {
+		position: relative;
+	}
+
+	.forecast {
+		font-family: 'Star4000';
+		font-size: 24pt;
+		text-transform: uppercase;
+		@include u.text-shadow();
+		min-height: 280px;
+		line-height: 40px;
+	}
+}

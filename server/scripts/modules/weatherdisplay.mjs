@@ -252,15 +252,18 @@ class WeatherDisplay {
 
 		this.startNavCount();
 
+		console.log(`Showing canvas for ${this.elemId}`);
+
 		this.elem.classList.add('show');
 		document.querySelector('#divTwc').classList.add(this.elemId);
 	}
 
 	hideCanvas() {
 		this.resetNavBaseCount();
+		if (this.elem === null) return;
 		this.elem.classList.remove('show');
 		// used to change backgrounds for widescreen
-		document.querySelector('#divTwc').classList.remove(this.elemId);
+		document.querySelector('#divTwc	').classList.remove(this.elemId);
 	}
 
 	get active() {

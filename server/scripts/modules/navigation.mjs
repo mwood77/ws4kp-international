@@ -5,6 +5,7 @@ import { wrap } from './utils/calc.mjs';
 import {
 	getPoint, getMarinePoint, getGeocoding, aggregateWeatherForecastData, getAirQualityPoint,
 } from './utils/weather.mjs';
+// eslint-disable-next-line import/no-cycle
 import settings from './settings.mjs';
 import NearbyCities from './utils/nearby-cities.mjs';
 import ExperimentalFeatures from './utils/experimental.mjs';
@@ -230,6 +231,7 @@ const countLoadedDisplays = () => displays.reduce((acc, display) => {
 }, 0);
 
 const hideAllCanvases = () => {
+	console.log(displays);
 	displays.forEach((display) => display.hideCanvas());
 };
 

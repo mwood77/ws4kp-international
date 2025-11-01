@@ -42,6 +42,7 @@
   <script type="module" src="scripts/modules/hazards.mjs"></script>
   <script type="module" src="scripts/modules/currentweatherscroll.mjs"></script>
   <script type="module" src="scripts/modules/currentweather.mjs"></script>
+  <script type="module" src="scripts/modules/customweatherstation.mjs"></script>
   <script type="module" src="scripts/modules/almanac.mjs"></script>
   <script type="module" src="scripts/modules/icons.mjs"></script>
   <script type="module" src="scripts/modules/extendedforecast.mjs"></script>
@@ -110,6 +111,9 @@
       </div>
       <div id="current-weather-html" class="weather-display">
         <%- include('partials/current-weather.ejs') %>
+      </div>
+      <div id="custom-weather-station" class="weather-display">
+        <%- include('partials/custom-weather-station.ejs') %>
       </div>
       <div id="local-forecast-html" class="weather-display">
         <%- include('partials/local-forecast.ejs') %>
