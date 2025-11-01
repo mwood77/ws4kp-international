@@ -149,7 +149,10 @@ const getWeather = async (latLon, haveDataCallback) => {
 				+ '\nnearybyCities is not set in localStorage. Origin could be a permalink.'
 				+ '\nAttempting to retrieve new cities.');
 
-			newNearbyCities = await NearbyCities.getNearbyCities(localityName.split(',')[0]);
+			newNearbyCities = await NearbyCities.getNearbyCities(localityName.split(',')[0]).catch((error) => {
+				console.error('Error fetching nearby cities:', error);
+				return [];
+			});
 			localStorage.setItem('nearbyCitiesFromLocality', JSON.stringify(newNearbyCities));
 
 			weatherParameters.nearbyCities = newNearbyCities;

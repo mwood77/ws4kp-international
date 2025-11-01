@@ -378,7 +378,10 @@ class Radar extends WeatherDisplay {
 			const sw = bounds.getSouthWest();
 			const ne = bounds.getNorthEast();
 
-			const cities = await RadarBoundsCities.getBoundingBoxCities(sw.lng, sw.lat, ne.lng, ne.lat);
+			const cities = await RadarBoundsCities.getBoundingBoxCities(sw.lng, sw.lat, ne.lng, ne.lat).catch((error) => {
+				console.error('Error fetching bounding box cities:', error);
+				return [];
+			});
 
 			// Do this so the map isn't cluttered around origin location
 			const filteredCities = cities.filter((city) => {
