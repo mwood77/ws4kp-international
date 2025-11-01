@@ -104,6 +104,10 @@ export default class NearbyCities {
 								return Array.from(finalResult);
 							});
 					});
+			})
+			.catch((error) => {
+				console.error('Error in getNearbyCities:', error);
+				return [];
 			});
 	}
 }
