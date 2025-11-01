@@ -1,7 +1,7 @@
 import createToken from './hmac.mjs';
 
 const corsAnywhereKnownSources = [
-	'https://ws4kp.easypete.com/',
+	'https://ws4kp-proxy.easypete.com/',
 ];
 
 export default class NearbyCities {
