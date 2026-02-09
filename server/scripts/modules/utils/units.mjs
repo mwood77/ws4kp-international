@@ -15,6 +15,7 @@ const knotsToMs = (Knots) => {
 // Temperature conversions
 const celsiusToFahrenheit = (Celsius) => Math.round((Celsius * 9) / 5 + 32);
 const celsiusToKelvin = (Celsius) => Math.round(Celsius + 273.15);
+const fahrenheitToCelsius = (Fahrenheit) => Math.round((Fahrenheit - 32) * 5 / 9);
 
 // Distance conversions
 const kilometersToMiles = (Kilometers) => Math.round(Kilometers / 1.609_34);
@@ -22,10 +23,13 @@ const kilometersToFeet = (Kilometers) => Math.round(Kilometers * 3280.84);
 const kilometersToMeters = (Kilometers) => Math.round(Kilometers * 1000);
 const KilometersToBananas = (Kilometers) => Math.round(Kilometers * 1000 / 0.18); // 1 banana = 0.18 km
 const metersToFeet = (Meters) => Math.round(Meters / 0.3048);
+const mphtoKph = (Mph) => Math.round(Mph * 1.609_34);
+const milesToKm = (Miles) => Math.round(Miles * 1.609_34);
 
 // Pressure conversions
 const pascalToInHg = (Pascal) => round2(Pascal * 0.000_295_3, 2);
 const pascalToMmHg = (Pascal) => round2(Pascal * 0.007_500_62, 2);
+const inHgToHectopascal = (InHg) => round2(InHg * 33.863_9, 2);
 
 export {
 	round2,
@@ -36,8 +40,12 @@ export {
 	kphToBft,
 	knotsToMs,
 
+	mphtoKph,
+	milesToKm,
+
 	celsiusToFahrenheit,
 	celsiusToKelvin,
+	fahrenheitToCelsius,
 
 	kilometersToMiles,
 	kilometersToFeet,
@@ -47,4 +55,5 @@ export {
 
 	pascalToInHg,
 	pascalToMmHg,
+	inHgToHectopascal,
 };
