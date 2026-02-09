@@ -252,8 +252,6 @@ class WeatherDisplay {
 
 		this.startNavCount();
 
-		console.log(`Showing canvas for ${this.elemId}`);
-
 		this.elem.classList.add('show');
 		document.querySelector('#divTwc').classList.add(this.elemId);
 	}
@@ -261,13 +259,15 @@ class WeatherDisplay {
 	hideCanvas() {
 		this.resetNavBaseCount();
 		if (this.elem === null) return;
-		this.elem.classList.remove('show');
+		if (this.elemId !== 'hazards' && this.elem?.classList.length !== 0) this.elem.classList.remove('show');
 		// used to change backgrounds for widescreen
-		document.querySelector('#divTwc	').classList.remove(this.elemId);
+		document.querySelector('#divTwc').classList.remove(this.elemId);
 	}
 
 	get active() {
-		return this.elem.offsetHeight !== 0;
+		// avoid accessing offsetHeight on a missing element
+		// return this.elem.offsetHeight !== 0;
+		return !!this.elem?.offsetHeight;
 	}
 
 	get enabled() {

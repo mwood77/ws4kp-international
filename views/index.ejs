@@ -112,9 +112,6 @@
       <div id="current-weather-html" class="weather-display">
         <%- include('partials/current-weather.ejs') %>
       </div>
-      <div id="custom-weather-station" class="weather-display">
-        <%- include('partials/custom-weather-station.ejs') %>
-      </div>
       <div id="local-forecast-html" class="weather-display">
         <%- include('partials/local-forecast.ejs') %>
       </div>
@@ -141,6 +138,9 @@
       </div>
       <div id="aqi-forecast-html" class="weather-display">
         <%- include('partials/aqi-forecast.ejs') %>
+      </div>
+      <div id="custom-weather-station-html" class="weather-display">
+        <%- include('partials/custom-weather-station.ejs') %>
       </div>
     </div>
     <div id="divTwcBottom">
@@ -233,8 +233,8 @@
   <div id="divInfo">
     Location: <span id="customSpanCity"></span> <span id="customSpanState"></span><br />
     Station Id: <span id="customSpanStationId"></span><br />
-    <!-- Radar Id: <span id="spanRadarId"></span><br /> -->
-    <!-- Zone Id: <span id="spanZoneId"></span><br /> -->
+    Radar Id: <span id="spanRadarId"></span><br />
+    Zone Id: <span id="spanZoneId"></span><br />
   </div>
 
   <div id="divRefresh">

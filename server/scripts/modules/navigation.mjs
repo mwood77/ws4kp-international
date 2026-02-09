@@ -37,6 +37,22 @@ const init = async () => {
 	window.addEventListener('resize', resize);
 	resize();
 
+	// set up custom event listener for custom messages from displays
+	window.addEventListener('custom-weather:update', (event) => {
+		console.log('Received custom-weather:update event with data:', event);
+		if (event.detail) {
+			// store on shared weatherParameters so displays can read it
+			weatherParameters.customWeather = event.detail;
+
+			// optionally notify displays that implement a handler
+			displays.forEach((display) => {
+				if (typeof display.onCustomWeather === 'function') {
+					display.onCustomWeather(event.detail);
+				}
+			});
+		}
+	});
+
 	// auto refresh
 	const autoRefresh = localStorage.getItem('autoRefresh');
 	if (!autoRefresh || autoRefresh === 'true') {
@@ -234,7 +250,6 @@ const countLoadedDisplays = () => displays.reduce((acc, display) => {
 }, 0);
 
 const hideAllCanvases = () => {
-	console.log(displays);
 	displays.forEach((display) => display.hideCanvas());
 };
 
@@ -264,6 +279,7 @@ const displayNavMessage = (myMessage) => {
 
 // navigate to next or previous
 const navTo = (direction) => {
+	console.log(`navTo called with direction: ${direction.toString()}`);
 	// test for a current display
 	const current = currentDisplay();
 	progress.hideCanvas();

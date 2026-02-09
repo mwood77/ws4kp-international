@@ -2,34 +2,136 @@
 @use 'shared/_utils'as u;
 
 #custom-weather-station-html.weather-display {
-	background-image: url('../images/Background12.png');
+	background-image: url('../images/BackGround1_1.png');
 }
 
-.weather-display .custom-weather-station {
+// .custom-weather-station {
 
-	&.show {
-		height: 480px;
-	}
+// 	&.show {
+// 		height: 480px;
+// 	}
 
-	.container {
-		position: relative;
-		top: 15px;
-		margin: 0px 10px;
-		box-sizing: border-box;
-		height: 280px;
-		overflow: hidden;
-	}
+// 	.container {
+// 		position: relative;
+// 		top: 15px;
+// 		margin: 0px 10px;
+// 		box-sizing: border-box;
+// 		height: 280px;
+// 		overflow: hidden;
+// 	}
 
-	.forecasts {
-		position: relative;
-	}
+// 	.forecasts {
+// 		position: relative;
+// 	}
 
-	.forecast {
-		font-family: 'Star4000';
-		font-size: 24pt;
-		text-transform: uppercase;
-		@include u.text-shadow();
-		min-height: 280px;
-		line-height: 40px;
+// 	.forecast {
+// 		font-family: 'Star4000';
+// 		font-size: 24pt;
+// 		text-transform: uppercase;
+// 		@include u.text-shadow();
+// 		min-height: 280px;
+// 		line-height: 40px;
+// 	}
+// }
+
+.custom-weather-station {
+	&.main {
+
+		.col {
+			height: 50px;
+			width: 255px;
+			display: inline-block;
+			margin-top: 10px;
+			position: absolute;
+
+			@include u.text-shadow();
+
+			&.left {
+				font-family: 'Star4000 Extended';
+				font-size: 24pt;
+
+			}
+
+			&.right {
+				right: 0px;
+				font-family: 'Star4000 Large';
+				font-size: 16pt;
+				font-weight: bold;
+
+				.row {
+					margin-bottom: 12px;
+
+					.label,
+					.value {
+						display: inline-block;
+					}
+
+					.label {
+						margin-left: 20px;
+					}
+
+					.value {
+						float: right;
+						margin-right: 10px;
+					}
+
+				}
+
+			}
+		}
+
+		.pressure-arrow { 
+			height: 21px;
+		}
+
+		.invert-pressure-arrow {
+			transform: scaley(-1);
+		}
+
+		.center {
+			text-align: center;
+		}
+
+		.temp {
+			font-family: 'Star4000 Large';
+			font-size: 24pt;
+		}
+
+		.condition {}
+
+		.icon {
+			height: 100px;
+
+			img {
+				max-width: 126px;
+			}
+		}
+
+		.wind-container {
+			margin-bottom: 10px;
+
+			&>div {
+				width: 45%;
+				display: inline-block;
+				margin: 0px;
+			}
+
+			.wind-label {
+				margin-left: 5px;
+			}
+
+			.wind {
+				text-align: right;
+			}
+		}
+
+		.wind-gusts {
+			margin-left: 5px;
+		}
+
+		.location {
+			color: c.$title-color;
+			margin-bottom: 10px;
+		}
 	}
 }

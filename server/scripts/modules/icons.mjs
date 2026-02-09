@@ -200,9 +200,14 @@ const getWeatherIconFromIconLink = (text, timeZone, extendedForecast) => {
 	const addPath = (icon) => `images/${icon}`;
 
 	const nightTime = isNightTime(timeZone);
-	let tidyText = text.toLowerCase().replaceAll(' ', '-');
+	let tidyText;
+	if (text.length > 3) {
+		tidyText = text.toLowerCase().replaceAll(' ', '-');
+	} else {
+		tidyText = text;
+	}
 
-	if (!extendedForecast) {
+	if (!extendedForecast && tidyText.length > 3) {
 		if (nightTime && tidyText.includes('clear')) tidyText += '-night';
 	}
 
