@@ -53,7 +53,7 @@ const index = (req, res) => {
 		production: false,
 		version,
 		// pass bootstrapped initial data to the page (stringified for safe insertion)
-		initialData: JSON.stringify(latestWeather),
+		// initialData: JSON.stringify(latestWeather),
 	});
 };
 
