@@ -1,7 +1,11 @@
 <%- include('header.ejs', {titleDual:{ top: 'Custom' , bottom: 'Weather Station' }, hasTime: true, noaaLogo: false}) %>
 	<div class="main has-scroll has-box custom-weather-station">
-			<div class="weather template">
+
+		<div class="no-data-failure-container">
+			<div class="message">NO DATA</div>
+		</div>
 			
+		<div class="weather template">
 			<div class="left col">
 				<div class="temp center"></div>
 				<div class="condition center"></div>

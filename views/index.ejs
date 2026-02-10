@@ -231,14 +231,11 @@
 
   <div class='heading'>Custom Weather Station Information</div>
   <div id="divInfo">
-    Location: <span id="customSpanCity"></span> <span id="customSpanState"></span><br />
     Station Id: <span id="customSpanStationId"></span><br />
-    Radar Id: <span id="spanRadarId"></span><br />
-    Zone Id: <span id="spanZoneId"></span><br />
+    Last Update: <span id="customSpanLastRefresh">(None)</span><br />
   </div>
 
   <div id="divRefresh">
-    Last Update: <span id="customSpanLastRefresh">(None)</span><br />
   </div>
 
   <script type="module">
@@ -502,9 +499,7 @@
       function applyPayload(payload) {
         if (!payload) return;
         try {
-          if (payload.locationCity) document.getElementById('customSpanCity').textContent = payload.locationCity + ',';
-          if (payload.locationState && payload.stationName) document.getElementById('customSpanState').textContent = payload.locationState;
-          if (payload.stationName) document.getElementById('customSpanStationId').textContent = payload.stationName;
+          if (payload.locationCity) document.getElementById('customSpanStationId').textContent = payload.locationCity;
           if (payload.lastUpdated) document.getElementById('customSpanLastRefresh').textContent = payload.lastUpdated;
 
           // Dispatch a global event so module code can react instead of coupling here

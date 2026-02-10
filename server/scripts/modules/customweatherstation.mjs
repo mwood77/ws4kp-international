@@ -27,8 +27,8 @@ class CustomWeatherStation extends WeatherDisplay {
 		const customWeatherParameters = this.weatherParameters.customWeather;
 
 		if (!customWeatherParameters) {
-			console.warn('CustomWeatherStation: No custom weather data available, unable to custom forecast.');
-			this.elem.querySelector('.main').innerHTML = 'No custom weather station data available';
+			console.warn('CustomWeatherStation: No custom weather data available, unable to render custom forecast.');
+			this.finishDraw();
 			return;
 		}
 
