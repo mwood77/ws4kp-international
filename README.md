@@ -203,14 +203,14 @@ This is handled automatically as part of CI/CD, when your code is merged to `mai
 
 ## Updates in 12.0.0
 
-- Introduces customer weather station data
-    - You can now display data from your own weather station. 
+- Introduces personal weather station data
+    - You can now display data from your own weather station.
     - `ws4kp-international` supports the following ingestion "standards:"
-        - WeatherUnderground's [Personal Weather Station Upload protocol](https://support.weather.com/s/article/PWS-Upload-Protocol?language=en_US)
-            - This interface expects the incoming data to be in **imperial** units.
+        - Weather Underground's [Personal Weather Station upload protocol](https://support.weather.com/s/article/PWS-Upload-Protocol?language=en_US)
+            - This interface expects the incoming data to be in ***imperial*** units.
             - The ingestion point is located at:
                 ```shell
-                GET <YOUR-HOST-URL>/v1/pws
+                GET <YOUR-HOST>/v1/pws
 
                 # Example request
                 GET localhost:8080/v1/pws?ID=ASTATIONID&PASSWORD=notarealpassword&dateutc=2025-10-19T12:00:00Z&winddir=264&windspeedmph=12&windgustmph=5&windgustdir=264&humidity=43&dewptf=66&tempf=87&weather=RA&UV=2&visibility=40&baromin=30

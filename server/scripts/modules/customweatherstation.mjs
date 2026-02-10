@@ -9,7 +9,7 @@ import ConversionHelpers from './utils/conversionHelpers.mjs';
 
 class CustomWeatherStation extends WeatherDisplay {
 	constructor(navId, elemId, defaultActive) {
-		super(navId, elemId, 'Custom Weather Station', false, defaultActive);
+		super(navId, elemId, 'Personal Weather Station', false, defaultActive);
 
 		// set timings
 		this.timing.baseDelay = 5000;
