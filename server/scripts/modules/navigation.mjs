@@ -5,6 +5,7 @@ import { wrap } from './utils/calc.mjs';
 import {
 	getPoint, getMarinePoint, getGeocoding, aggregateWeatherForecastData, getAirQualityPoint,
 } from './utils/weather.mjs';
+// eslint-disable-next-line import/no-cycle
 import settings from './settings.mjs';
 import NearbyCities from './utils/nearby-cities.mjs';
 import ExperimentalFeatures from './utils/experimental.mjs';
@@ -35,6 +36,22 @@ const init = async () => {
 	// set up resize handler
 	window.addEventListener('resize', resize);
 	resize();
+
+	// set up custom event listener for custom messages from displays
+	window.addEventListener('custom-weather:update', (event) => {
+		console.debug('Received custom-weather:update event with data:', event);
+		if (event.detail) {
+			// store on shared weatherParameters so displays can read it
+			weatherParameters.customWeather = event.detail;
+
+			// optionally notify displays that implement a handler
+			displays.forEach((display) => {
+				if (typeof display.onCustomWeather === 'function') {
+					display.onCustomWeather(event.detail);
+				}
+			});
+		}
+	});
 
 	// auto refresh
 	const autoRefresh = localStorage.getItem('autoRefresh');

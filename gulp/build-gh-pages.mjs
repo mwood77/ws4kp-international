@@ -44,6 +44,7 @@ const mjsSources = [
 	'server/scripts/modules/travelforecast.mjs',
 	'server/scripts/modules/marine-forecast.mjs',
 	'server/scripts/modules/aqi-forecast.mjs',
+	'server/scripts/modules/customweatherstation.mjs',
 	'server/scripts/modules/progress.mjs',
 	'server/scripts/index.mjs',
 ];

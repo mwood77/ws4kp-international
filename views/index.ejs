@@ -42,6 +42,7 @@
   <script type="module" src="scripts/modules/hazards.mjs"></script>
   <script type="module" src="scripts/modules/currentweatherscroll.mjs"></script>
   <script type="module" src="scripts/modules/currentweather.mjs"></script>
+  <script type="module" src="scripts/modules/customweatherstation.mjs"></script>
   <script type="module" src="scripts/modules/almanac.mjs"></script>
   <script type="module" src="scripts/modules/icons.mjs"></script>
   <script type="module" src="scripts/modules/extendedforecast.mjs"></script>
@@ -138,6 +139,9 @@
       <div id="aqi-forecast-html" class="weather-display">
         <%- include('partials/aqi-forecast.ejs') %>
       </div>
+      <div id="custom-weather-station-html" class="weather-display">
+        <%- include('partials/custom-weather-station.ejs') %>
+      </div>
     </div>
     <div id="divTwcBottom">
       <div id="divTwcBottomLeft">
@@ -218,16 +222,17 @@
 	<div class='heading'>Forecast Information</div>
   <div id="divInfo">
     Location: <span id="spanCity"></span> <span id="spanState"></span><br />
-
-    <!-- If enabling these, you must modify populateWeatherParameters() again -->
-    <!-- Station Id: <span id="spanStationId"></span><br /> -->
-    <!-- Radar Id: <span id="spanRadarId"></span><br /> -->
-    <!-- Zone Id: <span id="spanZoneId"></span><br /> -->
   </div>
 
   <div id="divRefresh">
     Last Update: <span id="spanLastRefresh">(None)</span><br />
     <input id="chkAutoRefresh" name="chkAutoRefresh" type="checkbox" /><label id="lblRefreshCountDown" for="chkAutoRefresh">Auto Refresh: <span id="spanRefreshCountDown">--:--</span></label>
+  </div>
+
+  <div class='heading'>Personal Weather Station Information</div>
+  <div id="divInfo">
+    Station Id: <span id="customSpanStationId"></span><br />
+    Last Update: <span id="customSpanLastRefresh">(None)</span><br />
   </div>
 
   <script type="module">
@@ -474,6 +479,54 @@
       webamp.toggleShuffle();
 
       webamp.renderWhenReady(document.getElementById("webamp-app"));
+  </script>
+  <script>
+    (function () {
+      // Parse bootstrapped JSON from a dedicated script tag to avoid template parsing issues
+      const initialJson = document.getElementById('initial-data') && document.getElementById('initial-data').textContent;
+      let initial = null;
+      try {
+        initial = initialJson ? JSON.parse(initialJson) : null;
+      } catch (e) {
+        initial = null;
+      }
+
+      // Minimal renderer: update a few visible fields. Modules can listen for 'custom-weather:update' event for more complex updates
+      function applyPayload(payload) {
+        if (!payload) return;
+        try {
+          if (payload.locationCity) document.getElementById('customSpanStationId').textContent = payload.locationCity;
+          if (payload.lastUpdated) document.getElementById('customSpanLastRefresh').textContent = payload.lastUpdated;
+
+          // Dispatch a global event so module code can react instead of coupling here
+          window.dispatchEvent(new CustomEvent('custom-weather:update', { detail: payload }));
+        } catch (e) {
+          // defensive: DOM may not be present yet
+        }
+      }
+
+      // Apply initial bootstrapped data if present
+      applyPayload(initial);
+
+      // Live updates using Server-Sent Events
+      if (typeof EventSource !== 'undefined') {
+        const es = new EventSource('/events');
+        es.onmessage = (e) => {
+          try {
+            const parsed = JSON.parse(e.data);
+            if (parsed && parsed.type === 'weather-update') {
+              console.log('Received weather update via SSE', parsed);
+              applyPayload(parsed.payload);
+            }
+          } catch (err) {
+            console.error('SSE parse error', err);
+          }
+        };
+        es.onerror = () => {
+          // optional: reconnect logic could go here
+        };
+      }
+    })();
   </script>
 </body>
 

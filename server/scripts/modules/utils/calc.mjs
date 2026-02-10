@@ -104,6 +104,20 @@ const distance = (x1, y1, x2, y2) => Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 // wrap a number to 0-m
 const wrap = (x, m) => ((x % m) + m) % m;
 
+function metarsToWeatherCode(metar) {
+	// This is a very basic implementation and may not cover all cases
+	if (metar.includes('-RA')) return 61; // light rain
+	if (metar.includes('RA')) return 63; // moderate rain
+	if (metar.includes('+RA')) return 65; // heavy rain
+	if (metar.includes('SN')) return 73;
+	if (metar.includes('TS')) return 95; // thunderstorm
+	if (metar.includes('TSRA')) return 99; // thunderstorm with rain
+	if (metar.includes('FG')) return 45; // fog
+	if (metar.includes('BR')) return 80;
+	if (metar.includes('HZ')) return 48;
+	return 0; // default to "clear" if no conditions found
+}
+
 export {
 	calculateSeasCondition,
 	getMarineAdvisory,
@@ -111,4 +125,5 @@ export {
 	haversineDistance,
 	distance,
 	wrap,
+	metarsToWeatherCode,
 };
