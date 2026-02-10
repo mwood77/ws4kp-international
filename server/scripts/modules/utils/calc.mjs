@@ -71,6 +71,14 @@ function getMarineAdvisory(periodMarineData, dailyWindMinMaxInKnots) {
 		advisory = 'Rough Surf Advisory';
 	}
 
+	// if advisory is too short, it's likely a wind modifier
+	// without a wave height advisory, so we must clean it up
+	if (advisory.length <= 8) {
+		const bracketRegex = /\(([^)]*)\)/g;
+		const sanitizedAdvisory = advisory.trim().replace(bracketRegex, '$1');
+		advisory = sanitizedAdvisory;
+	}
+
 	return advisory.toUpperCase();
 }
 
