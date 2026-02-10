@@ -39,7 +39,7 @@ const init = async () => {
 
 	// set up custom event listener for custom messages from displays
 	window.addEventListener('custom-weather:update', (event) => {
-		console.log('Received custom-weather:update event with data:', event);
+		console.debug('Received custom-weather:update event with data:', event);
 		if (event.detail) {
 			// store on shared weatherParameters so displays can read it
 			weatherParameters.customWeather = event.detail;
@@ -279,7 +279,6 @@ const displayNavMessage = (myMessage) => {
 
 // navigate to next or previous
 const navTo = (direction) => {
-	console.log(`navTo called with direction: ${direction.toString()}`);
 	// test for a current display
 	const current = currentDisplay();
 	progress.hideCanvas();

@@ -42,7 +42,6 @@ class CustomWeatherStation extends WeatherDisplay {
 		const fill = {
 			temp: ConversionHelpers.convertTemperatureUnits(customWeatherParameters.temperature) + String.fromCharCode(176),
 			condition,
-			// wind: customWeatherParameters.windDirection.padEnd(3, '') + customWeatherParameters.windSpeed.toString().padStart(3, ' '),
 			wind: customWeatherParameters.windDirection + ConversionHelpers.convertWindUnits(customWeatherParameters.windSpeed),
 			location: customWeatherParameters.locationCity,
 			humidity: `${customWeatherParameters.humidity}%`,
