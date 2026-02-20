@@ -81,6 +81,7 @@ const getWeather = async (latLon, haveDataCallback) => {
 
 	// Get locality data from open-meteo and local storage
 	const localityName = localStorage.getItem('latLonQuery');
+	const storedLatLon = localStorage.getItem('latLon');
 	let locality;
 
 	// We need to check if localityName is set in localStorage
@@ -108,9 +109,24 @@ const getWeather = async (latLon, haveDataCallback) => {
 		locality = await getGeocoding(localityName.split(',')[0]);
 	}
 
-	// @todo - this shouldn't be hardcoded
-	// when a user searches for a location that doesn't have a city
-	// this will error out.
+	// we need to confirm that the stored latLon matches the latLon of the weather data we
+	// just retrieved. This ensures that we don't have a mismatch between the locality and the
+	// weather data
+	if (storedLatLon) {
+		// eslint-disable-next-line no-plusplus
+		for (let i = 0; i < locality.results.length; i++) {
+			const result = locality.results[i];
+			// compare rounded to 1 decimal place (nearest tenth)
+			const round1 = (v) => Math.round(v * 10) / 10;
+			if (round1(result.latitude) === round1(latLon.lat) && round1(result.longitude) === round1(latLon.lon)) {
+				console.debug('getWeather: found a locality that matches the current latLon (rounded to 0.1)');
+				locality = {
+					results: [result],
+				};
+				break;
+			}
+		}
+	}
 
 	// set the city and state
 	const city = locality.results[0].name;
