@@ -95,9 +95,9 @@ const screens = [
 		// Typically an airport with "International" at the second position
 		if (data.city.split(' ').length > 2 && data.city.split(' ')[1].toLowerCase() === 'international') {
 			sanitizedText += `${data.city.split(' ')[0]} Mezinár. ${data.city.split(' ')[2]} `;
-		// or a very long city name...this will
-		// truncate very long airports too, like
-		// "John F. Kennedy International Airport"
+			// or a very long city name...this will
+			// truncate very long airports too, like
+			// "John F. Kennedy International Airport"
 		} else if (data.city.length > 20) {
 			sanitizedText += `${data.city.slice(0, 18)}...`;
 		} else {
@@ -142,7 +142,7 @@ const screens = [
 	// visibility
 	(data) => {
 		const distance = `${data.Ceiling} ${data.CeilingUnit}`;
-		return `Viditelnost: ${data.Visibility} ${data.VisibilityUnit}   Zákl.obl.: ${data.Ceiling === 0 ? 'Neomezeno' : distance}`;
+		return `Vidit: ${data.Visibility} ${data.VisibilityUnit}   Zákl.obl.: ${data.Ceiling === 0 ? 'Neomezeno' : distance}`;
 	},
 ];
 

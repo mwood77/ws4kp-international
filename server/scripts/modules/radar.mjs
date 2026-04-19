@@ -18,7 +18,7 @@ import RadarUtils from './utils/radar-utils.mjs';
 class Radar extends WeatherDisplay {
 	static radarSource = 'https://api.rainviewer.com/public/weather-maps.json';
 
-	static tileSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}';
+	static tileSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
 
 	static defaultCityDistance = 40; 				// 40 km
 
@@ -110,7 +110,7 @@ class Radar extends WeatherDisplay {
 	}
 
 	addLocationMarker(latitude, longitude, cityName, weatherData = null) {
-	// Remove existing marker if it exists
+		// Remove existing marker if it exists
 		if (this.locationMarker && window._leafletMap) {
 			window._leafletMap.removeLayer(this.locationMarker);
 		}
@@ -250,7 +250,7 @@ class Radar extends WeatherDisplay {
 	}
 
 	changeRadarPosition(position, preloadOnly = false, force = false) {
-	// Wrap position to valid range
+		// Wrap position to valid range
 		while (position >= this.mapFrames.length) {
 			position -= this.mapFrames.length;
 		}
@@ -276,7 +276,7 @@ class Radar extends WeatherDisplay {
 
 		// Don't wait for tiles if forced, or if we're not currently loading
 		if (!force && this.isTilesLoading()) {
-		// Set a timeout to try again
+			// Set a timeout to try again
 			setTimeout(() => {
 				this.changeRadarPosition(position, false, true);
 			}, 100);
@@ -475,7 +475,7 @@ class Radar extends WeatherDisplay {
 					.setView([weatherParameters.latitude, weatherParameters.longitude], leafletDefaultZoom);
 
 				window.L.tileLayer(Radar.tileSource, {
-					attribution: 'Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri',
+					attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
 				}).addTo(window._leafletMap);
 			} else {
 				window._leafletMap.setView([weatherParameters.latitude, weatherParameters.longitude], leafletDefaultZoom);

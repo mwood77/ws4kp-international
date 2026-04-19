@@ -121,7 +121,7 @@ class Almanac extends WeatherDisplay {
 		const Tomorrow = Today.plus({ days: 1 });
 
 		const czechDays = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota', 'Neděle'];
-		const czechMonths = ['led', 'úno', 'bře', 'dub', 'kvě', 'čvn', 'čvc', 'srp', 'zář', 'říj', 'lis', 'pro'];
+		const czechMonths = ['LED', 'ÚNO', 'BŘE', 'DUB', 'KVĚ', 'ČVN', 'ČVC', 'SRP', 'ZÁŘ', 'ŘÍJ', 'LIS', 'PRO'];
 
 		// sun and moon data
 		this.elem.querySelector('.day-1').innerHTML = czechDays[Today.weekday - 1];
@@ -133,15 +133,15 @@ class Almanac extends WeatherDisplay {
 
 		const phaseTranslations = {
 			'Full': 'Úplněk',
-			'Last': 'Poslední čtvrť',
+			'Last': 'Poslední',
 			'New': 'Nov',
-			'First': 'První čtvrť'
+			'First': 'První'
 		};
 
 		const days = info.moon.map((MoonPhase) => {
 			const fill = {};
 
-			const date = `${MoonPhase.date.day}. ${czechMonths[MoonPhase.date.month - 1]}.`;
+			const date = `${MoonPhase.date.day}. ${czechMonths[MoonPhase.date.month - 1]}`;
 
 			fill.date = date;
 			fill.type = phaseTranslations[MoonPhase.phase] || MoonPhase.phase;

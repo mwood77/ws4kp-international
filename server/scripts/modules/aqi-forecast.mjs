@@ -9,9 +9,17 @@ import ExperimentalFeatures from './utils/experimental.mjs';
 
 class AirQualityForecast extends WeatherDisplay {
 	constructor(navId, elemId, defaultActive) {
-		super(navId, elemId, 'Kvalita ovzduší', defaultActive);
+		// Jméno musí zůstat 'Air Quality', aby hlavní skript věděl, kam poslat data
+		super(navId, elemId, 'Air Quality', defaultActive);
 		this.backgroundImage = loadImg('images/Background12.png');
 		this.nearbyCities = [];
+	}
+
+	// Tímto přepíšeme název pouze pro zaškrtávací políčko v menu dole
+	generateCheckbox(defaultEnabled = true) {
+		const label = super.generateCheckbox(defaultEnabled);
+		if (label) label.querySelector('span').innerHTML = 'Kvalita ovzduší';
+		return label;
 	}
 
 	// We're setting the core data object; largely used for location data

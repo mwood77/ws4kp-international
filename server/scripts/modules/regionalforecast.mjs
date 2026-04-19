@@ -11,7 +11,8 @@ import { DateTime } from '../vendor/auto/luxon.mjs';
 import WeatherDisplay from './weatherdisplay.mjs';
 import { registerDisplay } from './navigation.mjs';
 import * as utils from './regionalforecast-utils.mjs';
-import { getPoint } from './utils/weather.mjs';
+import { getPoint, getConditionText } from './utils/weather.mjs';
+import ConversionHelpers from './utils/conversionHelpers.mjs';
 
 class RegionalForecast extends WeatherDisplay {
 	constructor(navId, elemId) {
@@ -22,153 +23,133 @@ class RegionalForecast extends WeatherDisplay {
 		this.timing.totalScreens = 3;
 	}
 
+	// Přepíšeme název pouze pro zaškrtávací políčko v menu
+	generateCheckbox(defaultEnabled = true) {
+		const label = super.generateCheckbox(defaultEnabled);
+		if (label) label.querySelector('span').innerHTML = 'Regionální předpověď';
+		return label;
+	}
+
 	async getData(_weatherParameters) {
 		if (!super.getData(_weatherParameters)) return;
-		const weatherParameters = _weatherParameters ?? this.weatherParameters;
 
-		// pre-load the base map
-		let baseMap = 'images/Basemap2.png';
-		if (weatherParameters.state === 'HI') {
-			baseMap = 'images/HawaiiRadarMap4.png';
-		} else if (weatherParameters.state === 'AK') {
-			baseMap = 'images/AlaskaRadarMap6.png';
-		}
-		this.elem.querySelector('.map img').src = baseMap;
+		// Použijeme stávající mapu. Tip: Nahraďte Basemap2.png za vlastní mapu ČR (640x480)!
+		this.elem.querySelector('.map img').src = 'images/Basemap2.png';
 
-		// map offset
-		const offsetXY = {
-			x: 240,
-			y: 117,
-		};
-		// get user's location in x/y
-		const sourceXY = utils.getXYFromLatitudeLongitude(weatherParameters.latitude, weatherParameters.longitude, offsetXY.x, offsetXY.y, weatherParameters.state);
+		// Vlastní seznam českých měst pro regionální mapu
+		const czechRegionalCities = [
+			{ name: 'Praha', lat: 50.0880, lon: 14.4207 },
+			{ name: 'Brno', lat: 49.1951, lon: 16.6068 },
+			{ name: 'Ostrava', lat: 49.8209, lon: 18.2625 },
+			{ name: 'Plzeň', lat: 49.7384, lon: 13.3736 },
+			{ name: 'Liberec', lat: 50.7671, lon: 15.0562 },
+			{ name: 'Č. Budějovice', lat: 48.9745, lon: 14.4743 },
+		];
 
-		// get latitude and longitude limits
-		const minMaxLatLon = utils.getMinMaxLatitudeLongitude(sourceXY.x, sourceXY.y, offsetXY.x, offsetXY.y, weatherParameters.state);
-
-		// get a target distance
-		let targetDistance = 2.5;
-		if (weatherParameters.state === 'HI') targetDistance = 1;
-
-		// make station info into an array
-		const stationInfoArray = Object.values(StationInfo).map((value) => ({ ...value, targetDistance }));
-		// combine regional cities with station info for additional stations
-		// stations are intentionally after cities to allow cities priority when drawing the map
-		const combinedCities = [...RegionalCities, ...stationInfoArray];
-
-		// Determine which cities are within the max/min latitude/longitude.
-		const regionalCities = [];
-		combinedCities.forEach((city) => {
-			if (city.lat > minMaxLatLon.minLat && city.lat < minMaxLatLon.maxLat
-						&& city.lon > minMaxLatLon.minLon && city.lon < minMaxLatLon.maxLon - 1) {
-				// default to 1 for cities loaded from RegionalCities, use value calculate above for remaining stations
-				const targetDist = city.targetDistance || 1;
-				// Only add the city as long as it isn't within set distance degree of any other city already in the array.
-				const okToAddCity = regionalCities.reduce((acc, testCity) => {
-					const distance = calcDistance(city.lon, city.lat, testCity.lon, testCity.lat);
-					return acc && distance >= targetDist;
-				}, true);
-				if (okToAddCity) regionalCities.push(city);
-			}
-		});
-
-		// get regional forecasts and observations (the two are intertwined due to the design of api.weather.gov)
-		const regionalDataAll = await Promise.all(regionalCities.map(async (city) => {
+		const regionalDataAll = await Promise.all(czechRegionalCities.map(async (city) => {
 			try {
-				const point = city?.point ?? (await getAndFormatPoint(city.lat, city.lon));
-				if (!point) throw new Error('No pre-loaded point');
+				const forecast = await json(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto`);
 
-				// start off the observation task
-				const observationPromise = utils.getRegionalObservation(point, city);
+				// Projekce pro ČR (v procentech)
+				const percentX = (city.lon - 12.0) / 7.0;
+				const percentY = (51.1 - city.lat) / 2.6;
 
-				const forecast = await json(`https://api.weather.gov/gridpoints/${point.wfo}/${point.x},${point.y}/forecast`);
+				const currentWmo = forecast.current_weather.weathercode;
+				const isDay = forecast.current_weather.is_day === 1;
 
-				// get XY on map for city
-				const cityXY = utils.getXYForCity(city, minMaxLatLon.maxLat, minMaxLatLon.minLon, weatherParameters.state);
-
-				// wait for the regional observation if it's not done yet
-				const observation = await observationPromise;
-
-				if (!observation) return false;
-
-				// format the observation the same as the forecast
 				const regionalObservation = {
-					daytime: !!/\/day\//.test(observation.icon),
-					temperature: celsiusToFahrenheit(observation.temperature.value),
-					name: utils.formatCity(city.city),
-					icon: observation.icon,
-					x: cityXY.x,
-					y: cityXY.y,
+					daytime: isDay,
+					temperature: ConversionHelpers.convertTemperatureUnits(Math.round(forecast.current_weather.temperature)),
+					name: city.name,
+					icon: getConditionText(currentWmo),
+					x: percentX,
+					y: percentY,
 				};
 
-				// preload the icon
+				const todayWmo = forecast.daily.weather_code[0];
+				const forecastToday = {
+					daytime: true,
+					temperature: ConversionHelpers.convertTemperatureUnits(Math.round(forecast.daily.temperature_2m_max[0])),
+					name: city.name,
+					icon: getConditionText(todayWmo),
+					x: percentX,
+					y: percentY,
+					time: forecast.daily.time[0]
+				};
+
+				const tomorrowWmo = forecast.daily.weather_code[1];
+				const forecastTomorrow = {
+					daytime: true,
+					temperature: ConversionHelpers.convertTemperatureUnits(Math.round(forecast.daily.temperature_2m_max[1])),
+					name: city.name,
+					icon: getConditionText(tomorrowWmo),
+					x: percentX,
+					y: percentY,
+					time: forecast.daily.time[1]
+				};
+
 				preloadImg(getWeatherRegionalIconFromIconLink(regionalObservation.icon, !regionalObservation.daytime));
 
-				// return a pared-down forecast
-				// 0th object is the current conditions
-				// first object is the next period i.e. if it's daytime then it's the "tonight" forecast
-				// second object is the following period
-				// always skip the first forecast index because it's what's going on right now
-				return [
-					regionalObservation,
-					utils.buildForecast(forecast.properties.periods[1], city, cityXY),
-					utils.buildForecast(forecast.properties.periods[2], city, cityXY),
-				];
+				return [regionalObservation, forecastToday, forecastTomorrow];
 			} catch (error) {
-				console.log(`No regional forecast data for '${city.name ?? city.city}'`);
-				console.log(error);
+				console.error(`No regional forecast data for '${city.name}'`, error);
 				return false;
 			}
 		}));
 
-		// filter out any false (unavailable data)
 		const regionalData = regionalDataAll.filter((data) => data);
 
-		// test for data present
 		if (regionalData.length === 0) {
 			this.setStatus(STATUS.noData);
 			return;
 		}
 
-		// return the weather data and offsets
-		this.data = {
-			regionalData,
-			offsetXY,
-			sourceXY,
-		};
-
+		this.data = { regionalData };
 		this.setStatus(STATUS.loaded);
 	}
 
 	drawCanvas() {
 		super.drawCanvas();
-		// break up data into useful values
-		const { regionalData: data, sourceXY, offsetXY } = this.data;
+		const { regionalData: data } = this.data;
 
-		// draw the header graphics
-
-		// draw the appropriate title
 		const titleTop = this.elem.querySelector('.title.dual .top');
 		const titleBottom = this.elem.querySelector('.title.dual .bottom');
 		if (this.screenIndex === 0) {
-			titleTop.innerHTML = 'Regional';
-			titleBottom.innerHTML = 'Observations';
+			titleTop.innerHTML = 'Regionální';
+			titleBottom.innerHTML = 'Pozorování';
 		} else {
 			const forecastDate = DateTime.fromISO(data[0][this.screenIndex].time);
+			const czechDays = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota', 'Neděle'];
+			const dayName = czechDays[forecastDate.weekday - 1];
 
-			// get the name of the day
-			const dayName = forecastDate.toLocaleString({ weekday: 'long' });
-			titleTop.innerHTML = 'Forecast for';
-			// draw the title
+			titleTop.innerHTML = 'Předpověď na';
 			titleBottom.innerHTML = data[0][this.screenIndex].daytime
 				? dayName
-				: `${dayName} Night`;
+				: `${dayName} Noc`;
 		}
 
-		// draw the map
-		const scale = 640 / (offsetXY.x * 2);
 		const map = this.elem.querySelector('.map');
-		map.style.transform = `scale(${scale}) translate(-${sourceXY.x}px, -${sourceXY.y}px)`;
+		map.style.transform = 'none';
+		map.style.position = 'absolute';
+		map.style.left = '0px';
+		map.style.top = '0px';
+		map.style.margin = '0px';
+		map.style.padding = '0px';
+		map.style.width = '100%';
+		map.style.height = '100%';
+
+		const mapImg = this.elem.querySelector('.map img');
+		if (mapImg) {
+			mapImg.style.transform = 'none';
+			mapImg.style.position = 'absolute';
+			mapImg.style.left = '0px';
+			mapImg.style.top = '0px';
+			mapImg.style.margin = '0px';
+			mapImg.style.padding = '0px';
+			mapImg.style.width = '100%';
+			mapImg.style.height = '100%';
+			mapImg.style.objectFit = 'fill';
+		}
 
 		const cities = data.map((city) => {
 			const fill = {};
@@ -176,14 +157,11 @@ class RegionalForecast extends WeatherDisplay {
 
 			fill.icon = { type: 'img', src: getWeatherRegionalIconFromIconLink(period.icon, !period.daytime) };
 			fill.city = period.name;
-			const { temperature } = period;
-			fill.temp = temperature;
-
-			const { x, y } = period;
+			fill.temp = period.temperature;
 
 			const elem = this.fillTemplate('location', fill);
-			elem.style.left = `${x}px`;
-			elem.style.top = `${y}px`;
+			elem.style.left = `${period.x * 100}%`;
+			elem.style.top = `${period.y * 100}%`;
 
 			return elem;
 		});
@@ -195,15 +173,6 @@ class RegionalForecast extends WeatherDisplay {
 		this.finishDraw();
 	}
 }
-
-const getAndFormatPoint = async (lat, lon) => {
-	const point = await getPoint(lat, lon);
-	return {
-		x: point.properties.gridX,
-		y: point.properties.gridY,
-		wfo: point.properties.gridId,
-	};
-};
 
 // register display
 registerDisplay(new RegionalForecast(6, 'regional-forecast'));

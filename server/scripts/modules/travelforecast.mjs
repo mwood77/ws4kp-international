@@ -5,6 +5,23 @@ import { getWeatherRegionalIconFromIconLink } from './icons.mjs';
 import { DateTime } from '../vendor/auto/luxon.mjs';
 import WeatherDisplay from './weatherdisplay.mjs';
 import { registerDisplay } from './navigation.mjs';
+import { getConditionText } from './utils/weather.mjs';
+import ConversionHelpers from './utils/conversionHelpers.mjs';
+
+const czechTravelCities = [
+	{ Name: 'Praha', lat: 50.0880, lon: 14.4207 },
+	{ Name: 'Brno', lat: 49.1951, lon: 16.6068 },
+	{ Name: 'Ostrava', lat: 49.8209, lon: 18.2625 },
+	{ Name: 'Plzeň', lat: 49.7384, lon: 13.3736 },
+	{ Name: 'Liberec', lat: 50.7671, lon: 15.0562 },
+	{ Name: 'Olomouc', lat: 49.5938, lon: 17.2509 },
+	{ Name: 'Č. Budějovice', lat: 48.9745, lon: 14.4743 },
+	{ Name: 'Hr. Králové', lat: 50.2104, lon: 15.8328 },
+	{ Name: 'Ústí n. L.', lat: 50.6607, lon: 14.0322 },
+	{ Name: 'Pardubice', lat: 50.0408, lon: 15.7766 },
+	{ Name: 'Zlín', lat: 49.2265, lon: 17.6628 },
+	{ Name: 'Karlovy Vary', lat: 50.2305, lon: 12.8725 }
+];
 
 class TravelForecast extends WeatherDisplay {
 	constructor(navId, elemId, defaultActive) {
@@ -12,12 +29,12 @@ class TravelForecast extends WeatherDisplay {
 		super(navId, elemId, 'Travel Forecast', defaultActive);
 
 		// Remove from loading screen
-		this.showOnProgress = false;
+		this.showOnProgress = true;
 
 		// set up the timing
 		this.timing.baseDelay = 20;
 		// page sizes are 4 cities, calculate the number of pages necessary plus overflow
-		const pagesFloat = TravelCities.length / 4;
+		const pagesFloat = czechTravelCities.length / 4;
 		const pages = Math.floor(pagesFloat) - 2; // first page is already displayed, last page doesn't happen
 		const extra = pages % 1;
 		const timingStep = 75 * 4;
@@ -30,27 +47,31 @@ class TravelForecast extends WeatherDisplay {
 		this.timing.delay.push(150);
 	}
 
+	// Tímto přepíšeme název pouze pro zaškrtávací políčko v menu dole
+	generateCheckbox(defaultEnabled = true) {
+		const label = super.generateCheckbox(defaultEnabled);
+		if (label) label.querySelector('span').innerHTML = 'Cestovní předpověď';
+		return label;
+	}
+
 	async getData() {
 		// super checks for enabled
 		if (!super.getData()) return;
-		const forecastPromises = TravelCities.map(async (city) => {
+		const forecastPromises = czechTravelCities.map(async (city) => {
 			try {
-				// get point then forecast
-				if (!city.point) throw new Error('No pre-loaded point');
-				const forecast = await json(`https://api.weather.gov/gridpoints/${city.point.wfo}/${city.point.x},${city.point.y}/forecast`);
-				// determine today or tomorrow (shift periods by 1 if tomorrow)
-				const todayShift = forecast.properties.periods[0].isDaytime ? 0 : 1;
-				// return a pared-down forecast
+				const forecast = await json(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto`);
+				const currentHour = new Date().getHours();
+				const todayShift = currentHour >= 16 ? 1 : 0;
+				const wmoCode = forecast.daily.weather_code[todayShift];
 				return {
 					today: todayShift === 0,
-					high: forecast.properties.periods[todayShift].temperature,
-					low: forecast.properties.periods[todayShift + 1].temperature,
+					high: ConversionHelpers.convertTemperatureUnits(forecast.daily.temperature_2m_max[todayShift]),
+					low: ConversionHelpers.convertTemperatureUnits(forecast.daily.temperature_2m_min[todayShift]),
 					name: city.Name,
-					icon: getWeatherRegionalIconFromIconLink(forecast.properties.periods[todayShift].icon),
+					icon: getWeatherRegionalIconFromIconLink(getConditionText(wmoCode), true),
 				};
 			} catch (error) {
 				console.error(`GetTravelWeather for ${city.Name} failed`);
-				console.error(error.status, error.responseJSON);
 				return { name: city.Name, error: true };
 			}
 		});
@@ -100,7 +121,7 @@ class TravelForecast extends WeatherDisplay {
 
 				fillValues.icon = { type: 'img', src: icon };
 			} else {
-				fillValues.error = 'NO TRAVEL DATA AVAILABLE';
+				fillValues.error = 'DATA NEJSOU K DISPOZICI';
 			}
 			return this.fillTemplate('travel-row', fillValues);
 		}).filter((d) => d);
@@ -115,7 +136,7 @@ class TravelForecast extends WeatherDisplay {
 		// set up variables
 		const cities = this.data;
 
-		this.elem.querySelector('.header .title.dual .bottom').innerHTML = `For ${getTravelCitiesDayName(cities)}`;
+		this.elem.querySelector('.header .title.dual .bottom').innerHTML = `Na ${getTravelCitiesDayName(cities)}`;
 
 		this.finishDraw();
 	}
@@ -154,8 +175,9 @@ const getTravelCitiesDayName = (cities) => cities.reduce((dayName, city) => {
 	if (city && dayName === '') {
 		// today or tomorrow
 		const day = DateTime.local().plus({ days: (city.today) ? 0 : 1 });
+		const czechDaysAccusative = ['Pondělí', 'Úterý', 'Středu', 'Čtvrtek', 'Pátek', 'Sobotu', 'Neděli'];
 		// return the day
-		return day.toLocaleString({ weekday: 'long' });
+		return czechDaysAccusative[day.weekday - 1];
 	}
 	return dayName;
 }, '');

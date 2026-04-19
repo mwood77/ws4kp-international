@@ -2,3 +2,4 @@ node_modules
 **/debug.log
 server/scripts/custom.js
 .DS_Store
+server/scripts/modules/api-keys.mjs

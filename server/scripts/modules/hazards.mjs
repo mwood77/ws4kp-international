@@ -26,6 +26,13 @@ class Hazards extends WeatherDisplay {
 		this.timing.totalScreens = 0;
 	}
 
+	// Přepíšeme název pouze pro zaškrtávací políčko v menu dole
+	generateCheckbox(defaultEnabled = true) {
+		const label = super.generateCheckbox(defaultEnabled);
+		if (label) label.querySelector('span').innerHTML = 'Upozornění';
+		return label;
+	}
+
 	async getData(weatherParameters) {
 		// super checks for enabled
 		const superResult = super.getData(weatherParameters);
@@ -33,28 +40,71 @@ class Hazards extends WeatherDisplay {
 		const alert = this.checkbox.querySelector('.alert');
 		alert.classList.remove('show');
 
-		// try {
-		// 	// get the forecast
-		// 	const url = new URL('https://api.weather.gov/alerts/active');
-		// 	url.searchParams.append('point', `${this.weatherParameters.latitude},${this.weatherParameters.longitude}`);
-		// 	url.searchParams.append('limit', 5);
-		// 	const alerts = await json(url, { retryCount: 3, stillWaiting: () => this.stillWaiting() });
-		// 	const unsortedAlerts = alerts.features ?? [];
-		// 	const hasImmediate = unsortedAlerts.reduce((acc, hazard) => acc || hazard.properties.urgency === 'Immediate', false);
-		// 	const sortedAlerts = unsortedAlerts.sort((a, b) => (calcSeverity(b.properties.severity, b.properties.event)) - (calcSeverity(a.properties.severity, a.properties.event)));
-		// 	const filteredAlerts = sortedAlerts.filter((hazard) => hazard.properties.severity !== 'Unknown' && (!hasImmediate || (hazard.properties.urgency === 'Immediate')));
-		// 	this.data = filteredAlerts;
+		try {
+			const lat = this.weatherParameters.latitude;
+			const lon = this.weatherParameters.longitude;
 
-		// 	// show alert indicator
-		// 	if (this.data.length > 0) alert.classList.add('show');
-		// } catch (error) {
-		// 	console.error('Get hourly forecast failed');
-		// 	console.error(error.status, error.responseJSON);
-		// 	if (this.isEnabled) this.setStatus(STATUS.failed);
-		// 	// return undefined to other subscribers
-		// 	this.getDataCallback(undefined);
-		// 	return;
-		// }
+			// Vytvoření bounding boxu pro MeteoAlarm EDR API (cca +/- 5 km od lokace)
+			const bbox = `${lon - 0.05},${lat - 0.05},${lon + 0.05},${lat + 0.05}`;
+			// ADRESA TVÉHO PROXY SERVERU NA ALWAYSDATA (nahraď 'tvoje-jmeno' za svou reálnou doménu)
+			const url = new URL('https://negotiu.alwaysdata.net/apiw.php');
+			url.searchParams.append('bbox', bbox);
+
+			const alerts = await json(url, { retryCount: 3, stillWaiting: () => this.stillWaiting() });
+			const unsortedAlerts = alerts.features ?? [];
+
+			// Adaptace dat z evropského MeteoAlarmu do struktury očekávané aplikací
+			const processedAlerts = unsortedAlerts.map((hazard) => {
+				const props = hazard.properties || {};
+
+				// Extrakce typu nebezpečí
+				let rawEvent = props.event || props.awareness_type || 'UPOZORNĚNÍ';
+				if (typeof rawEvent === 'string' && rawEvent.includes(';')) {
+					rawEvent = rawEvent.split(';').pop().trim(); // Odstraní číselný kód a nechá jen název
+				}
+				let desc = props.description || props.instruction || '';
+				if (Array.isArray(desc)) desc = desc[0]?.text || desc[0] || '';
+
+				// Sjednocení závažnosti (Severity)
+				let severity = props.severity || props.awareness_level || 'Unknown';
+				if (severity.includes('Extreme') || severity.includes('4;')) severity = 'Extreme';
+				else if (severity.includes('Severe') || severity.includes('3;')) severity = 'Severe';
+				else if (severity.includes('Moderate') || severity.includes('2;')) severity = 'Moderate';
+
+				return {
+					...hazard,
+					properties: {
+						...props,
+						event: rawEvent.toUpperCase(),
+						description: desc,
+						severity: severity,
+						urgency: props.urgency || 'Immediate',
+					}
+				};
+			});
+
+			const hasImmediate = processedAlerts.reduce((acc, hazard) => acc || hazard.properties.urgency === 'Immediate', false);
+			const sortedAlerts = processedAlerts.sort((a, b) => (calcSeverity(b.properties.severity, b.properties.event)) - (calcSeverity(a.properties.severity, a.properties.event)));
+			const filteredAlerts = sortedAlerts.filter((hazard) => hazard.properties.severity !== 'Unknown' && (!hasImmediate || (hazard.properties.urgency === 'Immediate')));
+			this.data = filteredAlerts;
+
+		} catch (error) {
+			console.error('Nepodařilo se stáhnout výstrahy z MeteoAlarm API, nebo nejsou žádné aktivní.');
+			this.data = []; // Ochrana proti pádu - modul se při prázdných datech plynule přeskočí
+		}
+
+		// TESTOVACÍ VÝSTRAHA - Přidej testovací upozornění do fronty za všech okolností
+		//this.data.push({
+		//	properties: {
+		//		event: 'TESTOVACÍ VAROVÁNÍ: EXTRÉMNÍ BOUŘKY',
+		//		description: 'Toto je pouze zkouška varovného systému Weather Star 4000. Ve vašem okolí nehrozí žádné reálné nebezpečí.\n\nPokud by se jednalo o skutečnou událost, následovaly by zde informace o srážkách, větru a doporučené chování.',
+		//		severity: 'Severe',
+		//		urgency: 'Immediate'
+		//	}
+		//});
+
+		// Zobrazení ikonky blikajících výstrah (!!!), pokud nějaká data došla
+		if (this.data.length > 0) alert.classList.add('show');
 
 		this.getDataCallback();
 
@@ -114,6 +164,12 @@ class Hazards extends WeatherDisplay {
 		super.showCanvas();
 	}
 
+	hideCanvas() {
+		super.hideCanvas();
+		// Explicitní skrytí - oprava bugu z původního jádra, který bránil zavření
+		if (this.elem) this.elem.classList.remove('show');
+	}
+
 	// screen index change callback just runs the base count callback
 	screenIndexChange() {
 		this.baseCountChange(this.navBaseCount);
@@ -148,7 +204,7 @@ class Hazards extends WeatherDisplay {
 		// false is returned when we reach the end of the scroll
 		if (superValue === false) {
 			// set total screens to zero to take this out of the rotation
-			this.timing.totalScreens = 0;
+			// this.timing.totalScreens = 0; // Zakomentováno: výstraha se teď ukáže při každé rotaci
 		}
 		// return the value as expected
 		return superValue;
