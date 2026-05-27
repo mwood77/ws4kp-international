@@ -27,8 +27,8 @@ const mphtoKph = (Mph) => Math.round(Mph * 1.609_34);
 const milesToKm = (Miles) => Math.round(Miles * 1.609_34);
 
 // Pressure conversions
-const pascalToInHg = (Pascal) => round2(Pascal * 0.000_295_3, 2);
-const pascalToMmHg = (Pascal) => round2(Pascal * 0.007_500_62, 2);
+const pascalToInHg = (Pascal) => round2((Pascal * 100) * 0.000_295_3, 2);
+const pascalToMmHg = (Pascal) => round2((Pascal * 100) * 0.007_500_62, 2);
 const inHgToHectopascal = (InHg) => round2(InHg * 33.863_9, 2);
 
 export {
