@@ -24,6 +24,8 @@ class Radar extends WeatherDisplay {
 
 	static additionalLocationBufferDistance = 10; 	// 10 km
 
+	static radarIterationCount = 3;
+
 	constructor(navId, elemId) {
 		super(navId, elemId, 'Local Radar', true);
 
@@ -357,7 +359,7 @@ class Radar extends WeatherDisplay {
 			this.mapFrames = api.satellite.infrared;
 			this.lastPastFramePosition = api.satellite.infrared.length - 1;
 		} else if (api.radar && api.radar.past) {
-			this.mapFrames = [...api.radar.past];
+			this.mapFrames = Array(Radar.radarIterationCount).fill(api.radar.past).flat();
 			if (api.radar.nowcast) {
 				this.mapFrames = this.mapFrames.concat(api.radar.nowcast);
 			}
