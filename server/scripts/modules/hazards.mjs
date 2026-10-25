@@ -4,10 +4,14 @@ import STATUS from './status.mjs';
 import { json } from './utils/fetch.mjs';
 import WeatherDisplay from './weatherdisplay.mjs';
 import { registerDisplay } from './navigation.mjs';
+import { getHazardsMeteoAlarm } from './utils/hazards-meteoalarm.mjs';
 
 const hazardLevels = {
 	Extreme: 10,
 	Severe: 5,
+	Moderate: 3,
+	Minor: 2,
+	Unknown: 0,
 };
 
 const hazardModifiers = {
@@ -33,28 +37,32 @@ class Hazards extends WeatherDisplay {
 		const alert = this.checkbox.querySelector('.alert');
 		alert.classList.remove('show');
 
-		// try {
-		// 	// get the forecast
-		// 	const url = new URL('https://api.weather.gov/alerts/active');
-		// 	url.searchParams.append('point', `${this.weatherParameters.latitude},${this.weatherParameters.longitude}`);
-		// 	url.searchParams.append('limit', 5);
-		// 	const alerts = await json(url, { retryCount: 3, stillWaiting: () => this.stillWaiting() });
-		// 	const unsortedAlerts = alerts.features ?? [];
-		// 	const hasImmediate = unsortedAlerts.reduce((acc, hazard) => acc || hazard.properties.urgency === 'Immediate', false);
-		// 	const sortedAlerts = unsortedAlerts.sort((a, b) => (calcSeverity(b.properties.severity, b.properties.event)) - (calcSeverity(a.properties.severity, a.properties.event)));
-		// 	const filteredAlerts = sortedAlerts.filter((hazard) => hazard.properties.severity !== 'Unknown' && (!hasImmediate || (hazard.properties.urgency === 'Immediate')));
-		// 	this.data = filteredAlerts;
-
-		// 	// show alert indicator
-		// 	if (this.data.length > 0) alert.classList.add('show');
-		// } catch (error) {
-		// 	console.error('Get hourly forecast failed');
-		// 	console.error(error.status, error.responseJSON);
-		// 	if (this.isEnabled) this.setStatus(STATUS.failed);
-		// 	// return undefined to other subscribers
-		// 	this.getDataCallback(undefined);
-		// 	return;
-		// }
+		try {
+			const lat = weatherParameters?.latitude;
+			const lon = weatherParameters?.longitude;
+			const country = weatherParameters?.country || weatherParameters?.state || '';
+			if (lat !== undefined && lon !== undefined) {
+				const alerts = await getHazardsMeteoAlarm(lat, lon, country);
+				if (alerts && alerts.length > 0) {
+					const unsortedAlerts = alerts;
+					const hasImmediate = unsortedAlerts.reduce((acc, hazard) => acc || (hazard.properties?.urgency === 'Immediate'), false);
+					const sortedAlerts = unsortedAlerts.sort((a, b) => (calcSeverity(b.properties?.severity, b.properties?.event)) - (calcSeverity(a.properties?.severity, a.properties?.event)));
+					const filteredAlerts = sortedAlerts.filter((hazard) => (hazard.properties?.severity !== 'Unknown') && (!hasImmediate || (hazard.properties?.urgency === 'Immediate')));
+					this.data = filteredAlerts;
+					if (this.data.length > 0) alert.classList.add('show');
+				} else {
+					this.data = [];
+				}
+			} else {
+				this.data = [];
+			}
+		} catch (error) {
+			console.error('Get hazards failed');
+			console.error(error);
+			if (this.isEnabled) this.setStatus(STATUS.failed);
+			this.getDataCallback(undefined);
+			return;
+		}
 
 		this.getDataCallback();
 
