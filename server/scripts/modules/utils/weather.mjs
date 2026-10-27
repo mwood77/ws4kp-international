@@ -83,7 +83,8 @@ const getMarinePoint = async (lat, lon) => {
 
 const getGeocoding = async (name) => {
 	try {
-		return await json(`https://geocoding-api.open-meteo.com/v1/search?name=${name}&count=10&language=en&format=json`);
+		const numResults = 100;
+		return await json(`https://geocoding-api.open-meteo.com/v1/search?name=${name}&count=${numResults}&language=en&format=json`);
 	} catch (error) {
 		console.log(`Unable to get locality with value ${name}`);
 		console.error(error);

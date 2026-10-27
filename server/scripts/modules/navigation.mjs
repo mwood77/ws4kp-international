@@ -113,7 +113,7 @@ const getWeather = async (latLon, haveDataCallback) => {
 	// just retrieved. This ensures that we don't have a mismatch between the locality and the
 	// weather data
 	if (storedLatLon) {
-		const epsilon = 0.01; // ~1.1 km
+		const epsilon = 0.03; // ~4.1 km
 		// eslint-disable-next-line no-plusplus
 		for (let i = 0; i < locality.results.length; i++) {
 			const result = locality.results[i];
